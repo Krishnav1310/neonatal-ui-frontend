@@ -1,7 +1,6 @@
 {
-  "buildCommand": "cd NeoNatal_ui/frontend && npm install && npm run build",
+  "buildCommand": "cd NeoNatal_ui/frontend && npm install && npm run build && cd ../.. && rm -rf dist && cp -r NeoNatal_ui/frontend/dist ./dist",
   "outputDirectory": "NeoNatal_ui/frontend/dist",
-  "framework": "vite",
   "rewrites": [
     {
       "source": "/(.*)",

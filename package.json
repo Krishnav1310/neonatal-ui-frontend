@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "npm --prefix NeoNatal_ui/frontend install && npm --prefix NeoNatal_ui/frontend run build",
+    "build": "cd NeoNatal_ui/frontend && npm install && npm run build && cd ../.. && rm -rf dist && cp -r NeoNatal_ui/frontend/dist ./dist",
     "dev": "npm --prefix NeoNatal_ui/frontend run dev"
   }
 }
