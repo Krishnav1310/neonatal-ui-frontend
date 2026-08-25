@@ -1,35 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-  /* Medical Trust & Clinical Palette */
-  --primary: #0284C7;        /* Medical Sky Blue */
-  --primary-hover: #0369A1;
-  --primary-light: #E0F2FE;
+  --akesis-bg: #EDF7F0;          /* Soft hospital sage mint background */
+  --akesis-surface: #FFFFFF;     /* Pure white card surface */
+  --akesis-border: #E2EFE6;      /* Soft clinical border */
+  --akesis-border-focus: #10B981;
+  --akesis-text-main: #133926;   /* Deep clinical forest slate */
+  --akesis-text-muted: #5C7A68;  /* Muted clinical grey-green */
+  --akesis-teal: #0D9488;
+  --akesis-teal-dark: #115E59;
   
-  --secondary: #EF4444;      /* Clinical Alert Red */
-  --secondary-light: #FEE2E2;
-  
-  --accent: #F59E0B;         /* Clinical Warning Amber */
-  --accent-light: #FEF3C7;
-  
-  --mint: #10B981;           /* Clinical Safe Emerald */
-  --mint-light: #D1FAE5;
-  
-  --lavender: #8B5CF6;       /* AI & ML Violet */
-  --lavender-light: #EDE9FE;
+  --status-safe: #10B981;
+  --status-safe-bg: #D1FAE5;
+  --status-warning: #F59E0B;
+  --status-warning-bg: #FEF3C7;
+  --status-critical: #EF4444;
+  --status-critical-bg: #FEE2E2;
 
-  --background: #F8FAFC;     /* Clean Hospital Slate Soft White */
-  --surface: #FFFFFF;
-  --surface-border: #E2E8F0;
-  --text-main: #0F172A;      /* Deep Slate Navy */
-  --text-muted: #64748B;     /* Subdued Slate Grey */
-  --text-light: #94A3B8;
-
-  --glow: rgba(2, 132, 199, 0.25);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
-  --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.08);
-  --shadow-xl: 0 20px 40px rgba(15, 23, 42, 0.12);
+  --shadow-card: 0 4px 16px rgba(16, 100, 60, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 * {
@@ -38,66 +27,164 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--background);
-  color: var(--text-main);
-  overflow-x: hidden;
-  line-height: 1.5;
+  background-color: var(--akesis-bg);
+  color: var(--akesis-text-main);
+  min-height: 100vh;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Base Card Styles */
-.medical-card {
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: 20px;
-  box-shadow: var(--shadow-md);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+/* Header styling */
+.akesis-header {
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--akesis-border);
+  padding: 14px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-.medical-card:hover {
-  box-shadow: var(--shadow-lg);
-  border-color: #CBD5E1;
+/* Card base */
+.akesis-card {
+  background: var(--akesis-surface);
+  border: 1.5px solid var(--akesis-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s ease;
 }
 
-/* Buttons */
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), #0284C7);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: 700;
+.akesis-card:hover {
+  border-color: #CBDED2;
+  box-shadow: 0 6px 20px rgba(16, 100, 60, 0.06);
+}
+
+/* Vital Metric Card */
+.vital-box {
+  background: #FFFFFF;
+  border: 1.5px solid var(--akesis-border);
+  border-radius: 16px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 130px;
+  box-shadow: var(--shadow-card);
+}
+
+.vital-box-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--akesis-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vital-box-value {
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1;
+  margin: 8px 0 6px;
+  letter-spacing: -1px;
+}
+
+.vital-box-unit {
   font-size: 14px;
-  padding: 12px 24px;
-  cursor: pointer;
+  font-weight: 700;
+  color: var(--akesis-text-muted);
+  margin-left: 4px;
+}
+
+.vital-box-normal {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--akesis-text-muted);
+}
+
+/* Top Stat Capsule */
+.stat-capsule {
+  background: #FFFFFF;
+  border: 1.5px solid var(--akesis-border);
+  border-radius: 16px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.stat-capsule.highlight-orange {
+  border: 2px solid #F59E0B;
+}
+
+.stat-capsule.highlight-red {
+  border: 2px solid #EF4444;
+}
+
+/* Trend indicator */
+.trend-tag {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 14px var(--glow);
-  text-decoration: none;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.35);
-  background: linear-gradient(135deg, #0369A1, var(--primary));
+.trend-up { background: #FEE2E2; color: #DC2626; }
+.trend-down { background: #FEF3C7; color: #D97706; }
+.trend-stable { background: #D1FAE5; color: #059669; }
+
+/* Table styling for history */
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
 }
 
-.btn-secondary {
-  background: white;
-  color: var(--text-main);
-  border: 1.5px solid var(--surface-border);
-  border-radius: 12px;
+.history-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--akesis-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1.5px solid var(--akesis-border);
+}
+
+.history-table td {
+  padding: 10px;
   font-weight: 700;
-  font-size: 14px;
-  padding: 12px 24px;
-  cursor: pointer;
-  display: inline-flex;
+  color: var(--akesis-text-main);
+  border-bottom: 1px solid #F0F7F2;
+}
+
+.history-table tr:hover td {
+  background-color: #F8FDF9;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: #CBDED2;
+  border-radius: 4px;
+}
   align-items: center;
   gap: 8px;
   transition: all 0.25s ease;
