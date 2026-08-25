@@ -23,7 +23,8 @@ import {
   Clock, 
   FileText, 
   Baby, 
-  Info 
+  Info,
+  AlertTriangle 
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -48,16 +49,22 @@ const INITIAL_BABIES = [
     admissionDate: "Jan 21, 2026",
     incubator: "Incubator #01",
     motherName: "Priya Sharma",
-    deliveryType: "Full-Term Normal Delivery",
-    bloodGroup: "O+",
-    feedingSchedule: "Expressed Breast Milk (q3h)",
+    maternalHistory: "G1P1, 28 y/o, uncomplicated pregnancy, GBS negative, normotensive, clear amniotic fluid",
+    clinicalDiagnosis: "Full-term healthy neonate under routine 72h post-delivery observation & telemetry",
+    apgarScore: "9 at 1 min, 10 at 5 min",
+    deliveryType: "Full-Term Normal Vaginal Delivery",
+    bloodGroup: "O+ (Rh Positive)",
+    feedingSchedule: "Expressed Breast Milk (45ml q3h)",
+    medications: "Vitamin K1 1mg IM administered, Erythromycin 0.5% eye ointment, Hepatitis B vaccine (Dose 1)",
+    phototherapyStatus: "None required (Total Serum Bilirubin 4.2 mg/dL - Normal range)",
     status: "SAFE",
     riskLevel: "LOW",
     riskScore: 12,
     predictionReasons: [
-      "All vital parameters within physiological target range",
-      "Consistent diaphragmatic movement detected (45 BPM)",
-      "Normal sinus rhythm with stable perfusion (SpO₂ 98%)"
+      "All vital parameters within physiological target range (HR 142, SpO₂ 98%)",
+      "Consistent diaphragmatic movement detected (45 BPM regular rhythm)",
+      "Normal sinus rhythm with stable capillary refill (<2 sec)",
+      "Zero stillness or apnea alarms flagged in last 12 hours"
     ],
     vitals: { heartRate: 142, respRate: 45, spo2: 98, temp: 36.8 },
     trends: {
@@ -69,11 +76,20 @@ const INITIAL_BABIES = [
     stillTime: 0,
     cryStatus: "normal",
     isLiveSource: true,
-    historyEvents: [
-      { time: "13:52", type: "measurement", desc: "Routine vitals verified — parameters optimal" },
-      { time: "13:30", type: "activity", desc: "Position adjustment — Supine optimal alignment" },
-      { time: "13:00", type: "care", desc: "Scheduled feeding 45ml completed" },
-      { time: "12:45", type: "measurement", desc: "Infrared temperature check: 36.8°C" }
+    patientHistory: {
+      admissionReason: "Routine neonatal telemetry and post-delivery maternal-infant observation",
+      antenatalHistory: "Full antenatal care received (4 antenatal visits, all normal ultrasounds)",
+      resuscitation: "Not required; spontaneous crying at birth",
+      headCircumference: "34.5 cm (50th percentile)",
+      length: "50 cm",
+      allergies: "No known drug allergies (NKDA)"
+    },
+    alertHistory: [
+      { time: "13:52", level: "info", title: "Routine Vitals Synchronized", desc: "All parameters verified within normal physiological bounds (HR 142, SpO₂ 98%)" },
+      { time: "13:30", level: "info", title: "Positioning Checked", desc: "Supine alignment verified with comfortable breathing dynamics" },
+      { time: "13:00", level: "care", title: "Feeding Completed", desc: "Scheduled 45ml expressed breast milk given with good sucking reflex" },
+      { time: "12:45", level: "info", title: "Thermal Check", desc: "Infrared skin probe recorded 36.8°C (Optimal normothermia)" },
+      { time: "11:15", level: "care", title: "Pediatric Rounds", desc: "Senior neonatologist verified clear bilateral breath sounds and soft abdomen" }
     ]
   },
   {
@@ -86,16 +102,22 @@ const INITIAL_BABIES = [
     admissionDate: "Jan 20, 2026",
     incubator: "Incubator #02",
     motherName: "Neha Patel",
-    deliveryType: "Elective C-Section (37w)",
-    bloodGroup: "A+",
-    feedingSchedule: "Donor Milk Fortified (q3h)",
+    maternalHistory: "G2P1, 32 y/o, history of gestational diabetes (diet controlled), elective repeat C-section",
+    clinicalDiagnosis: "Transient Tachypnea of Newborn (TTN) resolving / Mild bradypnea episodes with borderline SpO₂",
+    apgarScore: "7 at 1 min, 9 at 5 min",
+    deliveryType: "Elective Lower Segment C-Section (37w)",
+    bloodGroup: "A+ (Rh Positive)",
+    feedingSchedule: "Donor Milk Fortified (35ml q3h via Paladai)",
+    medications: "Vitamin K1 IM, Oral Vitamin D3 drops (400 IU/day), IV maintenance fluids running at 4ml/hr",
+    phototherapyStatus: "Prophylactic blue LED phototherapy under review (TSB 9.8 mg/dL)",
     status: "WARNING",
     riskLevel: "MODERATE",
     riskScore: 54,
     predictionReasons: [
-      "Reduced respiratory frequency (Bradypnea: 25 breaths/min)",
-      "Mild accumulation of stillness duration (2s)",
-      "Oxygen saturation bordering lower threshold (SpO₂ 96%)"
+      "Reduced respiratory frequency (Bradypnea: 25 breaths/min below 30 threshold)",
+      "Mild accumulation of stillness duration (2s) flagged by PC2 vision algorithm",
+      "Oxygen saturation bordering lower safe threshold (SpO₂ 96%)",
+      "Moderate thermal variance under incubator servo-control (36.5°C)"
     ],
     vitals: { heartRate: 135, respRate: 25, spo2: 96, temp: 36.5 },
     trends: {
@@ -107,10 +129,20 @@ const INITIAL_BABIES = [
     stillTime: 2,
     cryStatus: "normal",
     isLiveSource: false,
-    historyEvents: [
-      { time: "13:48", type: "alert", desc: "Bradypnea alert flagged by Random Forest model" },
-      { time: "13:15", type: "measurement", desc: "SpO₂ monitored at 96% — close observation" },
-      { time: "12:30", type: "care", desc: "Thermal blanket recalibrated to 36.5°C" }
+    patientHistory: {
+      admissionReason: "Mild respiratory grunting and transient tachypnea shortly after elective C-section",
+      antenatalHistory: "Mother screened for GDM at 24 weeks; managed with strict dietary control",
+      resuscitation: "Tactile stimulation and brief bulb suctioning in delivery room",
+      headCircumference: "33.8 cm",
+      length: "48.5 cm",
+      allergies: "NKDA"
+    },
+    alertHistory: [
+      { time: "13:48", level: "warning", title: "Bradypnea Warning Triggered", desc: "Respiratory rate dipped to 25 BPM — Random Forest model increased risk score to 54" },
+      { time: "13:15", level: "warning", title: "Borderline SpO₂ Reading", desc: "Oxygen saturation recorded at 96% — continuous pulse oximetry tracking enabled" },
+      { time: "12:30", level: "care", title: "Incubator Temperature Adjusted", desc: "Thermal blanket setpoint raised to 36.5°C to prevent thermal stress" },
+      { time: "11:45", level: "info", title: "Blood Glucose Evaluated", desc: "Capillary heelstick glucose recorded 58 mg/dL (Normoglycemic)" },
+      { time: "10:20", level: "care", title: "Tactile Stimulation Given", desc: "Gentle back stroking prompted prompt recovery of respiratory cadence" }
     ]
   },
   {
@@ -123,17 +155,22 @@ const INITIAL_BABIES = [
     admissionDate: "Jan 22, 2026",
     incubator: "Incubator #03",
     motherName: "Ananya Rao",
-    deliveryType: "Emergency C-Section",
-    bloodGroup: "B+",
-    feedingSchedule: "TPN / IV Glucose Maintenance",
+    maternalHistory: "G1P0, 26 y/o, emergency admission for prolonged premature rupture of membranes (PROM > 18 hrs)",
+    clinicalDiagnosis: "Idiopathic Apnea of Newborn / Acute Severe Desaturation & Bradycardia Crisis",
+    apgarScore: "4 at 1 min, 7 at 5 min",
+    deliveryType: "Emergency C-Section under General Anesthesia",
+    bloodGroup: "B+ (Rh Positive)",
+    feedingSchedule: "NPO / TPN & IV 10% Dextrose Maintenance (8ml/hr)",
+    medications: "Caffeine Citrate 20mg/kg IV loading dose, Ampicillin & Gentamicin IV, D10W maintenance",
+    phototherapyStatus: "Suspended during acute stabilization",
     status: "UNSAFE",
     riskLevel: "HIGH",
     riskScore: 89,
     predictionReasons: [
-      "Prolonged stillness (22s) exceeding clinical apnea limit",
-      "Severe bradycardia: Heart rate dropped to 95 BPM (< 100 limit)",
-      "Desaturation event: SpO₂ dropped to 91%",
-      "Mild thermal loss: Temperature 36.2°C"
+      "Prolonged stillness (22s) exceeding clinical apnea emergency threshold (> 20s)",
+      "Severe bradycardia: Heart rate dropped dangerously to 95 BPM (< 100 limit)",
+      "Acute hypoxic desaturation event: SpO₂ plummeted to 91%",
+      "Mild hypothermia: Core temperature dropped to 36.2°C"
     ],
     vitals: { heartRate: 95, respRate: 0, spo2: 91, temp: 36.2 },
     trends: {
@@ -145,10 +182,20 @@ const INITIAL_BABIES = [
     stillTime: 22,
     cryStatus: "normal",
     isLiveSource: false,
-    historyEvents: [
-      { time: "13:50", type: "alert", desc: "CRITICAL APNEA ALERT: 22s without respiratory motion" },
-      { time: "13:49", type: "alert", desc: "Bradycardia warning: Heart rate below 100 bpm" },
-      { time: "13:20", type: "activity", desc: "Prone positioning recorded" }
+    patientHistory: {
+      admissionReason: "Emergency transfer to NICU for immediate resuscitation post emergency C-section with PROM",
+      antenatalHistory: "Spontaneous membrane rupture at home 18 hours prior to delivery; intrapartum fever treated",
+      resuscitation: "Positive pressure ventilation (PPV) administered for 90 seconds in delivery room",
+      headCircumference: "34.0 cm",
+      length: "49.0 cm",
+      allergies: "NKDA"
+    },
+    alertHistory: [
+      { time: "13:50", level: "critical", title: "🚨 CRITICAL APNEA ALARM", desc: "No respiratory motion detected for 22 seconds on PC2 computer vision node" },
+      { time: "13:49", level: "critical", title: "🚨 Severe Bradycardia Alert", desc: "Heart rate plummeted to 95 BPM (<100 emergency limit) — bedside alarm activated" },
+      { time: "13:48", level: "critical", title: "🚨 Hypoxic Desaturation Event", desc: "SpO₂ dropped rapidly to 91% — tactile stimulation and O₂ mask deployed" },
+      { time: "13:20", level: "info", title: "Prone Sleep Alignment Logged", desc: "Patient rested in prone position under continuous optical monitoring" },
+      { time: "12:00", level: "care", title: "Endotracheal Suctioning", desc: "Airway cleared of secretions; brief recovery before subsequent apnea episode" }
     ]
   },
   {
@@ -161,16 +208,22 @@ const INITIAL_BABIES = [
     admissionDate: "Jan 19, 2026",
     incubator: "Incubator #04",
     motherName: "Sunita Sen",
-    deliveryType: "Normal Vaginal Delivery",
-    bloodGroup: "AB+",
-    feedingSchedule: "Direct Breastfeeding + Supplement",
+    maternalHistory: "G3P2, 30 y/o, previous normal deliveries, clean antenatal profile, negative serologies",
+    clinicalDiagnosis: "Healthy term neonate with vigorous spontaneous activity, preparing for discharge",
+    apgarScore: "9 at 1 min, 9 at 5 min",
+    deliveryType: "Normal Spontaneous Vaginal Delivery",
+    bloodGroup: "AB+ (Rh Positive)",
+    feedingSchedule: "Direct Breastfeeding on demand + Formula Top-up (50ml)",
+    medications: "Routine neonatal prophylaxis completed (Vitamin K1, BCG, Oral Polio Vaccine)",
+    phototherapyStatus: "Not indicated (TSB 3.8 mg/dL)",
     status: "SAFE",
     riskLevel: "LOW",
     riskScore: 8,
     predictionReasons: [
-      "Vigorous movement and regular breathing frequency (48 BPM)",
-      "Excellent oxygenation: SpO₂ 99%",
-      "Heart rate stable at 145 BPM within ideal zone"
+      "Vigorous spontaneous movement and steady breathing cadence (48 BPM)",
+      "Excellent oxygenation: SpO₂ consistently at 99%",
+      "Heart rate stable at 145 BPM within ideal physiological center",
+      "Stable weight gain trajectory (+100g over birth weight)"
     ],
     vitals: { heartRate: 145, respRate: 48, spo2: 99, temp: 36.9 },
     trends: {
@@ -182,9 +235,19 @@ const INITIAL_BABIES = [
     stillTime: 0,
     cryStatus: "normal",
     isLiveSource: false,
-    historyEvents: [
-      { time: "13:40", type: "measurement", desc: "Vital signs recorded — patient active" },
-      { time: "12:15", type: "care", desc: "Kangaroo Mother Care session completed" }
+    patientHistory: {
+      admissionReason: "Routine neonatal observation and maternal lactation establishment",
+      antenatalHistory: "Normal antenatal scans; mother took daily prenatal multivitamins and iron",
+      resuscitation: "Spontaneous cry, no active resuscitation required",
+      headCircumference: "35.0 cm",
+      length: "51.0 cm",
+      allergies: "NKDA"
+    },
+    alertHistory: [
+      { time: "13:40", level: "info", title: "Optimal Physiological Vitals", desc: "SpO₂ 99%, HR 145 bpm, RR 48 bpm — perfect clinical stability" },
+      { time: "12:15", level: "care", title: "Kangaroo Mother Care Completed", desc: "45-minute skin-to-skin contact session with mother completed successfully" },
+      { time: "11:00", level: "info", title: "Daily Weight Recorded", desc: "Current weight 3.4 kg (+100g weight gain confirmed)" },
+      { time: "09:30", level: "care", title: "Neonatal Bath & Cord Care", desc: "Umbilical stump clean and dry, no signs of infection" }
     ]
   },
   {
@@ -197,16 +260,22 @@ const INITIAL_BABIES = [
     admissionDate: "Jan 21, 2026",
     incubator: "Incubator #05",
     motherName: "Kavita Kapoor",
-    deliveryType: "Preterm Normal Delivery (36w)",
-    bloodGroup: "O-",
-    feedingSchedule: "EBM via Gavage Tube",
+    maternalHistory: "G2P1, 29 y/o, mild pregnancy-induced hypertension (PIH), managed with Labetalol",
+    clinicalDiagnosis: "Late preterm infant (36w) with active hunger cry dynamics and healthy autonomic recovery",
+    apgarScore: "8 at 1 min, 9 at 5 min",
+    deliveryType: "Late Preterm Normal Delivery (36w)",
+    bloodGroup: "O- (Rh Negative)",
+    feedingSchedule: "Expressed Breast Milk via Gavage Tube (35ml q3h)",
+    medications: "Elemental Iron drops (2mg/kg/day), Multivitamin pediatric solution, Probiotics",
+    phototherapyStatus: "Single-surface LED phototherapy completed yesterday (TSB dropped to 7.1 mg/dL)",
     status: "SAFE",
     riskLevel: "LOW",
     riskScore: 22,
     predictionReasons: [
-      "Elevated respiratory rate (52 BPM) during cry activity",
-      "Vocal cry distress classified by PC3 Bio-Acoustic model",
-      "Oxygen saturation and heart rate responding normally"
+      "Elevated respiratory rate (52 BPM) and heart rate (149 BPM) during active hunger cry",
+      "Vocal cry distress classified as benign hunger cue by PC3 Bio-Acoustic model",
+      "Oxygen saturation and heart rate recovering normally following feeding",
+      "Core body temperature stable at 37.1°C"
     ],
     vitals: { heartRate: 149, respRate: 52, spo2: 97, temp: 37.1 },
     trends: {
@@ -218,9 +287,19 @@ const INITIAL_BABIES = [
     stillTime: 0,
     cryStatus: "distress",
     isLiveSource: false,
-    historyEvents: [
-      { time: "13:45", type: "alert", desc: "Acoustic Cry pattern classified: Hunger cry" },
-      { time: "13:10", type: "care", desc: "Diaper changed, soothing provided" }
+    patientHistory: {
+      admissionReason: "Late preterm feeding maturation and physiological jaundice observation",
+      antenatalHistory: "Mother admitted at 35+5 weeks with mild PIH; steroid cover completed (Betamethasone x 2)",
+      resuscitation: "Mild oral suctioning and dry towel stimulation at birth",
+      headCircumference: "33.2 cm",
+      length: "47.5 cm",
+      allergies: "NKDA"
+    },
+    alertHistory: [
+      { time: "13:45", level: "info", title: "Acoustic Cry AI Triggered", desc: "Bio-Acoustic classifier on PC3 identified high-frequency hunger cry" },
+      { time: "13:42", level: "info", title: "Physiological Tachycardia Logged", desc: "Heart rate rose to 149 BPM during cry — physiological autonomic response" },
+      { time: "13:10", level: "care", title: "Diaper Changed & Comforted", desc: "Patient changed and calmed by nursing team; cry subsided" },
+      { time: "12:00", level: "care", title: "Gavage Feed Administered", desc: "35ml expressed breast milk given via NG tube with nil aspirate" }
     ]
   },
   {
@@ -233,14 +312,21 @@ const INITIAL_BABIES = [
     admissionDate: "Jan 18, 2026",
     incubator: "Incubator #06 (Discharged)",
     motherName: "Deepa Nair",
-    deliveryType: "Normal Delivery",
-    bloodGroup: "B+",
-    feedingSchedule: "Full Oral Feeding",
+    maternalHistory: "G1P1, 31 y/o, normal antenatal course, negative infectious markers, no comorbidities",
+    clinicalDiagnosis: "Full-term neonate — All clinical criteria met, safely discharged to step-down nursery",
+    apgarScore: "9 at 1 min, 10 at 5 min",
+    deliveryType: "Full-Term Normal Delivery",
+    bloodGroup: "B+ (Rh Positive)",
+    feedingSchedule: "Full Oral Direct Breastfeeding on Demand",
+    medications: "Discharged with Vitamin D3 drops (400 IU daily)",
+    phototherapyStatus: "Resolved (TSB 3.2 mg/dL on discharge check)",
     status: "OFFLINE",
     riskLevel: "DISCHARGED",
     riskScore: 0,
     predictionReasons: [
-      "Incubator offline — Patient safely discharged to step-down nursery"
+      "Incubator offline — Patient successfully met all clinical discharge criteria",
+      "Consistent 72-hour normothermic vital stability",
+      "Full oral feeding achieved without desaturations"
     ],
     vitals: { heartRate: 0, respRate: 0, spo2: 0, temp: 0 },
     trends: {
@@ -252,8 +338,18 @@ const INITIAL_BABIES = [
     stillTime: 0,
     cryStatus: "normal",
     isLiveSource: false,
-    historyEvents: [
-      { time: "10:00", type: "care", desc: "Discharge clearance signed by senior neonatologist" }
+    patientHistory: {
+      admissionReason: "Post-natal clinical observation and phototherapy assessment (successfully completed)",
+      antenatalHistory: "Uncomplicated antenatal course",
+      resuscitation: "Not required",
+      headCircumference: "34.8 cm",
+      length: "50.5 cm",
+      allergies: "NKDA"
+    },
+    alertHistory: [
+      { time: "10:00", level: "care", title: "Formal Discharge Clearance Signed", desc: "Senior neonatologist signed off discharge summary and follow-up plan" },
+      { time: "09:30", level: "info", title: "Newborn Hearing Screen Passed", desc: "Otoacoustic emissions (OAE) test passed bilaterally" },
+      { time: "09:00", level: "info", title: "Final Discharge Weight Verified", desc: "Final discharge weight confirmed at 3.3 kg (+100g weight gain)" }
     ]
   }
 ];
@@ -1290,15 +1386,25 @@ function App() {
                 </div>
               </div>
 
-              {/* 3. Patient Information & Basic History Details */}
+              {/* 3. Detailed Patient Medical History & Clinical Profile */}
               <div style={{ padding: '24px', background: '#F8FAFC', borderRadius: '16px', border: '1px solid var(--surface-border)' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FileText size={18} color="var(--primary)" /> Patient History & Maternal Record
-                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FileText size={18} color="var(--primary)" /> Patient Medical History & Maternal Record
+                  </h3>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--primary)', background: 'var(--primary-light)', padding: '2px 8px', borderRadius: '6px' }}>
+                    APGAR: {activeBaby.apgarScore}
+                  </span>
+                </div>
+
+                <div style={{ padding: '10px 14px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--surface-border)', marginBottom: '14px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', textTransform: 'uppercase' }}>Clinical Diagnosis & Admission Reason:</span>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.clinicalDiagnosis}</span>
+                </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '12px' }}>
                   <div>
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Mother's Name:</span>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Mother's Profile:</span>
                     <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.motherName}</span>
                   </div>
                   <div>
@@ -1306,16 +1412,28 @@ function App() {
                     <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.deliveryType}</span>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Birth Weight:</span>
-                    <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.birthWeight} (Gain: +50g)</span>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Birth Weight & Growth:</span>
+                    <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.birthWeight} (Now: {activeBaby.weight})</span>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Blood Group:</span>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Blood Group & Rh:</span>
                     <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.bloodGroup}</span>
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Feeding Schedule:</span>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Maternal Obstetric History:</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{activeBaby.maternalHistory}</span>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Feeding Protocol:</span>
                     <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.feedingSchedule}</span>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Active Neonatal Medications:</span>
+                    <span style={{ fontWeight: 700, color: '#0369A1' }}>{activeBaby.medications}</span>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Phototherapy & Bilirubin:</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{activeBaby.phototherapyStatus}</span>
                   </div>
                 </div>
               </div>
@@ -1375,7 +1493,7 @@ function App() {
                 </div>
               </div>
 
-              {/* PC2 & PC3 Vision & Audio Telemetry Telemetry Node */}
+              {/* PC2 & PC3 Vision & Audio Telemetry Node */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 
                 {/* PC2 Vision Node Card */}
@@ -1408,34 +1526,53 @@ function App() {
 
               </div>
 
-              {/* Shift Events & Clinical Audit History Timeline */}
+              {/* Dedicated Alert History & Clinical History Log */}
               <div style={{ padding: '20px', background: '#F8FAFC', borderRadius: '16px', border: '1px solid var(--surface-border)' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Clock size={16} color="var(--primary)" /> Recent Clinical Events & History Log
-                </h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AlertTriangle size={17} color={activeBaby.status === 'UNSAFE' ? 'var(--secondary)' : 'var(--primary)'} />
+                    Alert History & Clinical Event Log ({activeBaby.name})
+                  </h4>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>
+                    {(activeBaby.alertHistory || []).length} Logged Events
+                  </span>
+                </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {activeBaby.historyEvents.map((evt: any, i: number) => {
-                    const isAlert = evt.type === 'alert';
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '280px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {(activeBaby.alertHistory || []).map((evt: any, i: number) => {
+                    const isCritical = evt.level === 'critical';
+                    const isWarning = evt.level === 'warning';
+                    const isCare = evt.level === 'care';
+
                     return (
                       <div 
                         key={i} 
                         style={{ 
-                          padding: '10px 14px', 
-                          background: isAlert ? 'var(--secondary-light)' : 'white', 
-                          borderRadius: '10px', 
-                          border: `1px solid ${isAlert ? '#FECACA' : '#E2E8F0'}`,
+                          padding: '12px 14px', 
+                          background: isCritical ? 'var(--secondary-light)' : (isWarning ? 'var(--accent-light)' : (isCare ? '#F0FDF4' : 'white')), 
+                          borderRadius: '12px', 
+                          border: `1px solid ${isCritical ? '#FECACA' : (isWarning ? '#FDE68A' : (isCare ? '#BBF7D0' : '#E2E8F0'))}`,
                           display: 'flex', 
-                          justifyContent: 'space-between', 
-                          alignItems: 'center',
-                          fontSize: '12px'
+                          flexDirection: 'column',
+                          gap: '3px'
                         }}
                       >
-                        <span style={{ fontWeight: 700, color: isAlert ? '#991B1B' : 'var(--text-main)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ 
+                            fontSize: '11px', 
+                            fontWeight: 800, 
+                            textTransform: 'uppercase',
+                            color: isCritical ? '#991B1B' : (isWarning ? '#B45309' : (isCare ? '#15803D' : 'var(--primary)')) 
+                          }}>
+                            {isCritical ? '🚨 ' : (isWarning ? '⚠️ ' : (isCare ? '🍼 ' : 'ℹ️ '))}
+                            {evt.title}
+                          </span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>
+                            {evt.time}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: isCritical ? '#7F1D1D' : '#334155', fontWeight: 600 }}>
                           {evt.desc}
-                        </span>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
-                          {evt.time}
                         </span>
                       </div>
                     );
