@@ -649,54 +649,13 @@ function App() {
 
               </div>
 
-              {/* 6. PATIENT MEDICAL HISTORY & MATERNAL RECORD CARD */}
-              <div style={{ marginTop: '20px', padding: '20px', background: '#F8FDF9', borderRadius: '14px', border: '1.5px solid var(--akesis-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <h4 style={{ fontSize: '13px', fontWeight: 900, color: 'var(--akesis-text-main)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                    <FileText size={16} color="#0D9488" /> Patient Medical History & Maternal Record ({activeBaby.name})
-                  </h4>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#0D9488', background: '#E0F2FE', padding: '2px 8px', borderRadius: '6px' }}>
-                    APGAR: {activeBaby.apgarScore}
-                  </span>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '12px' }}>
-                  <div>
-                    <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block' }}>Mother's Name:</span>
-                    <span style={{ fontWeight: 800, color: 'var(--akesis-text-main)' }}>{activeBaby.motherName}</span>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block' }}>Delivery Type:</span>
-                    <span style={{ fontWeight: 800, color: 'var(--akesis-text-main)' }}>{activeBaby.deliveryType}</span>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block' }}>Birth Weight:</span>
-                    <span style={{ fontWeight: 800, color: 'var(--akesis-text-main)' }}>{activeBaby.birthWeight} (Current: {activeBaby.weight})</span>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block' }}>Blood Group & Rh:</span>
-                    <span style={{ fontWeight: 800, color: 'var(--akesis-text-main)' }}>{activeBaby.bloodGroup}</span>
-                  </div>
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block' }}>Maternal History:</span>
-                    <span style={{ fontWeight: 700, color: 'var(--akesis-text-main)' }}>{activeBaby.maternalHistory}</span>
-                  </div>
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block' }}>Feeding Schedule:</span>
-                    <span style={{ fontWeight: 800, color: 'var(--akesis-text-main)' }}>{activeBaby.feedingSchedule}</span>
-                  </div>
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block' }}>Medications:</span>
-                    <span style={{ fontWeight: 700, color: '#0E7490' }}>{activeBaby.medications}</span>
-                  </div>
-                </div>
               </div>
 
             </div>
 
           </div>
 
-          {/* RIGHT COLUMN: AI Risk Assessment, Clinical Alerts & Telemetry History Log */}
+          {/* RIGHT COLUMN: AI Risk Assessment, Clinical Alerts & Patient Medical History */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
             {/* 1. AI RISK ASSESSMENT CARD */}
@@ -765,46 +724,58 @@ function App() {
               </div>
             </div>
 
-            {/* 3. TELEMETRY HISTORY LOG */}
+            {/* 3. PATIENT MEDICAL HISTORY & MATERNAL RECORD CARD (REPLACING TELEMETRY HISTORY LOG) */}
             <div className="akesis-card" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <div style={{ fontSize: '15px', fontWeight: 900, color: 'var(--akesis-text-main)' }}>
-                  Telemetry History Log
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 900, color: 'var(--akesis-text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FileText size={18} color="#0D9488" /> Patient Medical History
+                  </div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--akesis-text-muted)', marginTop: '2px' }}>
+                    Clinical Profile & Maternal Record for {activeBaby.id}
+                  </div>
                 </div>
-                <span style={{ fontSize: '10px', fontWeight: 800, background: '#E2EFE6', padding: '2px 8px', borderRadius: '4px', color: 'var(--akesis-text-main)' }}>
-                  {activeBaby.bedId}
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#0D9488', background: '#E0F2FE', padding: '3px 10px', borderRadius: '6px' }}>
+                  APGAR: {activeBaby.apgarScore}
                 </span>
               </div>
-              
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--akesis-text-muted)', marginBottom: '14px' }}>
-                Recent vital records for Patient {activeBaby.id}
-              </div>
 
-              <div style={{ overflowX: 'auto' }}>
-                <table className="history-table">
-                  <thead>
-                    <tr>
-                      <th>TIME</th>
-                      <th>HR</th>
-                      <th>SPO₂</th>
-                      <th>RESP</th>
-                      <th>TEMP</th>
-                      <th>BP</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeBaby.historyLogs.map((row, idx) => (
-                      <tr key={idx}>
-                        <td style={{ color: 'var(--akesis-text-muted)', fontSize: '11px' }}>{row.time}</td>
-                        <td>{row.hr}</td>
-                        <td>{row.spo2}%</td>
-                        <td>{row.resp}</td>
-                        <td>{row.temp}°C</td>
-                        <td>{row.bp}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px' }}>
+                <div style={{ padding: '10px 12px', background: '#F8FDF9', borderRadius: '10px', border: '1px solid var(--akesis-border)' }}>
+                  <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block', fontSize: '11px' }}>Mother's Name:</span>
+                  <span style={{ fontWeight: 800, color: 'var(--akesis-text-main)' }}>{activeBaby.motherName}</span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div style={{ padding: '10px 12px', background: '#F8FDF9', borderRadius: '10px', border: '1px solid var(--akesis-border)' }}>
+                    <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block', fontSize: '11px' }}>Delivery Type:</span>
+                    <span style={{ fontWeight: 800, color: 'var(--akesis-text-main)' }}>{activeBaby.deliveryType}</span>
+                  </div>
+                  <div style={{ padding: '10px 12px', background: '#F8FDF9', borderRadius: '10px', border: '1px solid var(--akesis-border)' }}>
+                    <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block', fontSize: '11px' }}>Blood Group:</span>
+                    <span style={{ fontWeight: 800, color: 'var(--akesis-text-main)' }}>{activeBaby.bloodGroup}</span>
+                  </div>
+                </div>
+
+                <div style={{ padding: '10px 12px', background: '#F8FDF9', borderRadius: '10px', border: '1px solid var(--akesis-border)' }}>
+                  <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block', fontSize: '11px' }}>Maternal History:</span>
+                  <span style={{ fontWeight: 700, color: 'var(--akesis-text-main)' }}>{activeBaby.maternalHistory}</span>
+                </div>
+
+                <div style={{ padding: '10px 12px', background: '#F8FDF9', borderRadius: '10px', border: '1px solid var(--akesis-border)' }}>
+                  <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block', fontSize: '11px' }}>Feeding Protocol:</span>
+                  <span style={{ fontWeight: 800, color: 'var(--akesis-text-main)' }}>{activeBaby.feedingSchedule}</span>
+                </div>
+
+                <div style={{ padding: '10px 12px', background: '#F8FDF9', borderRadius: '10px', border: '1px solid var(--akesis-border)' }}>
+                  <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block', fontSize: '11px' }}>Medications:</span>
+                  <span style={{ fontWeight: 700, color: '#0E7490' }}>{activeBaby.medications}</span>
+                </div>
+
+                <div style={{ padding: '10px 12px', background: '#F8FDF9', borderRadius: '10px', border: '1px solid var(--akesis-border)' }}>
+                  <span style={{ color: 'var(--akesis-text-muted)', fontWeight: 700, display: 'block', fontSize: '11px' }}>Phototherapy & Bilirubin:</span>
+                  <span style={{ fontWeight: 700, color: 'var(--akesis-text-main)' }}>{activeBaby.phototherapyStatus}</span>
+                </div>
               </div>
             </div>
 
