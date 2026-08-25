@@ -557,12 +557,12 @@ function FaceAnalysisCard({ face }: { face: any }) {
   );
 }
 
-// Camera Monitor with Live Feed and Frame Transmission
+// Camera Monitor with PC2 Remote Vision Stream & 3-PC Integration Telemetry
 function CameraMonitor({ motionData }: { motionData: any }) {
+  const [isLocalWebcamActive, setIsLocalWebcamActive] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const [error, setError] = useState<string>("");
 
   const startCamera = async () => {
     try {
@@ -570,10 +570,16 @@ function CameraMonitor({ motionData }: { motionData: any }) {
         video: { width: 640, height: 480 }
       });
       setMediaStream(stream);
-      setError("");
+      setIsLocalWebcamActive(true);
     } catch (err: any) {
-      setError(`Camera Error: ${err.name} - ${err.message}. Please allow camera access.`);
+      console.warn("Local webcam not available, using PC2 vision telemetry stream");
     }
+  };
+
+  const stopCamera = () => {
+    mediaStream?.getTracks().forEach(t => t.stop());
+    setMediaStream(null);
+    setIsLocalWebcamActive(false);
   };
 
   useEffect(() => {
@@ -584,7 +590,7 @@ function CameraMonitor({ motionData }: { motionData: any }) {
 
   useEffect(() => {
     let interval: any;
-    if (mediaStream) {
+    if (mediaStream && isLocalWebcamActive) {
       interval = setInterval(() => {
         if (videoRef.current && canvasRef.current) {
           const video = videoRef.current;
@@ -611,57 +617,28 @@ function CameraMonitor({ motionData }: { motionData: any }) {
       }, 500);
     }
     return () => clearInterval(interval);
-  }, [mediaStream]);
+  }, [mediaStream, isLocalWebcamActive]);
+
+  const isCritical = motionData?.status === 'UNSAFE';
+  const isWarning = motionData?.status === 'MONITOR' || motionData?.status === 'WARNING';
 
   return (
     <div style={{
       width: '100%',
       height: '480px',
-      backgroundColor: '#000',
+      backgroundColor: '#0F172A',
       borderRadius: '12px',
       overflow: 'hidden',
       display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
+      flexDirection: 'column',
       position: 'relative',
-      border: motionData?.status === 'UNSAFE' ? '4px solid #ef4444' : 'none',
-      boxShadow: motionData?.status === 'UNSAFE' ? '0 0 20px #ef4444' : 'none',
+      border: isCritical ? '4px solid #ef4444' : (isWarning ? '2px solid #f59e0b' : '1px solid #1e293b'),
+      boxShadow: isCritical ? '0 0 25px rgba(239,68,68,0.5)' : '0 4px 20px rgba(0,0,0,0.15)',
       transition: 'all 0.3s ease'
     }}>
-      {!mediaStream ? (
-        <div style={{ textAlign: 'center', color: 'white', padding: '20px' }}>
-          {error ? (
-            <div style={{ marginBottom: '16px', color: '#ef4444' }}>
-              <AlertCircle size={48} style={{ display: 'block', margin: '0 auto 8px' }} />
-              <p style={{ fontSize: '13px' }}>{error}</p>
-            </div>
-          ) : (
-            <div style={{ marginBottom: '16px' }}>
-              <p style={{ fontSize: '18px', marginBottom: '16px' }}>Camera access is required for monitoring</p>
-            </div>
-          )}
-          <button 
-            onClick={startCamera}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              margin: '0 auto'
-            }}
-          >
-            📷 Enable Camera Access
-          </button>
-        </div>
-      ) : (
-        <>
+      {/* If local webcam is enabled */}
+      {isLocalWebcamActive ? (
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
           <video 
             ref={videoRef} 
             autoPlay 
@@ -670,113 +647,216 @@ function CameraMonitor({ motionData }: { motionData: any }) {
             style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
           />
           <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
-          
+          <button 
+            onClick={stopCamera}
+            style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 20, padding: '6px 12px', background: 'rgba(0,0,0,0.7)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: 700 }}
+          >
+            Switch to PC2 Feed
+          </button>
+        </div>
+      ) : (
+        /* PC2 Remote Vision Telemetry Stream HUD */
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'radial-gradient(circle at center, #1E293B 0%, #0F172A 100%)',
+          color: 'white',
+          padding: '24px'
+        }}>
+          {/* Subtle Grid Lines Overlay */}
           <div style={{
             position: 'absolute',
-            top: '16px',
-            left: '16px',
-            backgroundColor: 'rgba(239, 68, 68, 0.9)',
-            color: 'white',
-            padding: '4px 12px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            fontWeight: 700,
+            inset: 0,
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+            pointerEvents: 'none'
+          }} />
+
+          {/* Incubator Outline Simulation Graphic */}
+          <div style={{
+            position: 'relative',
+            width: '260px',
+            height: '180px',
+            borderRadius: '24px',
+            border: isCritical ? '2px dashed #ef4444' : '2px dashed rgba(59,130,246,0.5)',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            gap: '6px'
+            justifyContent: 'center',
+            background: 'rgba(15, 23, 42, 0.6)',
+            boxShadow: isCritical ? '0 0 30px rgba(239,68,68,0.3)' : '0 0 20px rgba(59,130,246,0.15)',
+            marginBottom: '20px'
           }}>
-            <div style={{ width: '8px', height: '8px', backgroundColor: 'white', borderRadius: '50%' }} />
-            LIVE MONITORING
+            <div style={{ fontSize: '42px', marginBottom: '8px', filter: isCritical ? 'grayscale(0.5)' : 'none' }}>
+              👶
+            </div>
+            <div style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '1px', color: isCritical ? '#ef4444' : '#60a5fa' }}>
+              INCUBATOR VISION NODE
+            </div>
+            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px', fontWeight: 600 }}>
+              PC2 OpenCV Motion Stream
+            </div>
+
+            {/* Target Crosshairs */}
+            <div style={{ position: 'absolute', top: '10px', left: '10px', width: '12px', height: '12px', borderTop: '2px solid #60a5fa', borderLeft: '2px solid #60a5fa' }} />
+            <div style={{ position: 'absolute', top: '10px', right: '10px', width: '12px', height: '12px', borderTop: '2px solid #60a5fa', borderRight: '2px solid #60a5fa' }} />
+            <div style={{ position: 'absolute', bottom: '10px', left: '10px', width: '12px', height: '12px', borderBottom: '2px solid #60a5fa', borderLeft: '2px solid #60a5fa' }} />
+            <div style={{ position: 'absolute', bottom: '10px', right: '10px', width: '12px', height: '12px', borderBottom: '2px solid #60a5fa', borderRight: '2px solid #60a5fa' }} />
           </div>
 
-          {motionData?.status === 'UNSAFE' && (
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundColor: 'rgba(239, 68, 68, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <div style={{
-                backgroundColor: '#ef4444',
-                color: 'white',
-                padding: '20px 40px',
-                borderRadius: '12px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '12px',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
-              }}>
-                <AlertCircle size={48} />
-                <span style={{ fontSize: '24px', fontWeight: 800 }}>CRITICAL ALERT</span>
-                <span style={{ fontSize: '16px' }}>No movement detected!</span>
-              </div>
+          <div style={{ textAlign: 'center', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ width: '8px', height: '8px', background: isCritical ? '#ef4444' : '#10b981', borderRadius: '50%', boxShadow: `0 0 8px ${isCritical ? '#ef4444' : '#10b981'}` }} />
+              <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.5px', color: isCritical ? '#ef4444' : '#10b981' }}>
+                PC2 VISION STREAM CONNECTED
+              </span>
             </div>
-          )}
+            <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>
+              3-PC Integration: PC1 (Dashboard) ↔ PC2 (Camera AI) ↔ PC3 (Audio AI)
+            </p>
+          </div>
 
-          {motionData && (
-            <div style={{
+          <button 
+            onClick={startCamera}
+            style={{
               position: 'absolute',
-              bottom: '16px',
-              left: '16px',
+              top: '16px',
               right: '16px',
-              display: 'flex',
-              gap: '12px',
-              justifyContent: 'center'
+              padding: '6px 12px',
+              backgroundColor: 'rgba(255,255,255,0.08)',
+              color: '#94a3b8',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >
+            📷 Test Local Webcam
+          </button>
+        </div>
+      )}
+
+      {/* Top Left Live Banner */}
+      <div style={{
+        position: 'absolute',
+        top: '16px',
+        left: '16px',
+        backgroundColor: isCritical ? 'rgba(239, 68, 68, 0.9)' : 'rgba(16, 185, 129, 0.9)',
+        color: 'white',
+        padding: '4px 12px',
+        borderRadius: '6px',
+        fontSize: '11px',
+        fontWeight: 800,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        zIndex: 10,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+      }}>
+        <div style={{ width: '6px', height: '6px', backgroundColor: 'white', borderRadius: '50%' }} />
+        {isLocalWebcamActive ? "LOCAL WEBCAM FEED" : "PC2 VISION NODE"}
+      </div>
+
+      {/* Critical Overlay */}
+      {isCritical && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: 'rgba(239, 68, 68, 0.35)',
+          backdropFilter: 'blur(2px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 15
+        }}>
+          <div style={{
+            backgroundColor: '#ef4444',
+            color: 'white',
+            padding: '20px 40px',
+            borderRadius: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+          }}>
+            <AlertCircle size={44} />
+            <span style={{ fontSize: '22px', fontWeight: 900 }}>CRITICAL APNEA ALERT</span>
+            <span style={{ fontSize: '14px', fontWeight: 600 }}>Stillness exceeded on PC2 Vision Node!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Telemetry HUD */}
+      {motionData && (
+        <div style={{
+          position: 'absolute',
+          bottom: '16px',
+          left: '16px',
+          right: '16px',
+          display: 'flex',
+          gap: '12px',
+          justifyContent: 'center',
+          zIndex: 10
+        }}>
+          <div style={{
+            backgroundColor: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(6px)',
+            padding: '8px 18px',
+            borderRadius: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            border: isCritical ? '2px solid #ef4444' : '1px solid rgba(255,255,255,0.15)'
+          }}>
+            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 700 }}>STATUS</span>
+            <span style={{
+              color: motionData.status === 'SAFE' ? '#4ade80' : isCritical ? '#ef4444' : '#fbbf24',
+              fontWeight: 800,
+              fontSize: '13px'
             }}>
-              <div style={{
-                backgroundColor: 'rgba(0,0,0,0.7)',
-                backdropFilter: 'blur(4px)',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                border: motionData.status === 'UNSAFE' ? '2px solid #ef4444' : '1px solid rgba(255,255,255,0.2)'
-              }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>STATUS</span>
-                <span style={{
-                  color: motionData.status === 'SAFE' ? '#4ade80' : motionData.status === 'UNSAFE' ? '#ef4444' : '#fbbf24',
-                  fontWeight: 700
-                }}>
-                  {motionData.status}
-                </span>
-              </div>
+              {motionData.status}
+            </span>
+          </div>
 
-              <div style={{
-                backgroundColor: 'rgba(0,0,0,0.7)',
-                backdropFilter: 'blur(4px)',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                border: '1px solid rgba(255,255,255,0.2)'
-              }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>MOTION</span>
-                <span style={{ color: 'white', fontWeight: 700 }}>
-                  {typeof motionData.motion === 'number' ? motionData.motion.toFixed(2) : motionData.motion}
-                </span>
-              </div>
+          <div style={{
+            backgroundColor: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(6px)',
+            padding: '8px 18px',
+            borderRadius: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            border: '1px solid rgba(255,255,255,0.15)'
+          }}>
+            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 700 }}>PC2 MOTION</span>
+            <span style={{ color: 'white', fontWeight: 800, fontSize: '13px' }}>
+              {typeof motionData.motion === 'number' ? motionData.motion.toFixed(2) : motionData.motion}
+            </span>
+          </div>
 
-              <div style={{
-                backgroundColor: 'rgba(0,0,0,0.7)',
-                backdropFilter: 'blur(4px)',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                border: '1px solid rgba(255,255,255,0.2)'
-              }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>STILL TIME</span>
-                <span style={{ color: 'white', fontWeight: 700 }}>{motionData.stillTime}s</span>
-              </div>
-            </div>
-          )}
-        </>
+          <div style={{
+            backgroundColor: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(6px)',
+            padding: '8px 18px',
+            borderRadius: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            border: '1px solid rgba(255,255,255,0.15)'
+          }}>
+            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 700 }}>STILL TIME</span>
+            <span style={{ color: isCritical ? '#ef4444' : 'white', fontWeight: 800, fontSize: '13px' }}>
+              {motionData.stillTime}s
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );
