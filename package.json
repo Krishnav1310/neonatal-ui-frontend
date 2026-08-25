@@ -1,0 +1,9 @@
+{
+  "name": "neonatal-ai-monitoring",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm --prefix NeoNatal_ui/frontend install && npm --prefix NeoNatal_ui/frontend run build",
+    "dev": "npm --prefix NeoNatal_ui/frontend run dev"
+  }
+}

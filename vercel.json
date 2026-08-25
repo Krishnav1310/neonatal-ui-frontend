@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd NeoNatal_ui/frontend && npm install && npm run build",
+  "outputDirectory": "NeoNatal_ui/frontend/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
