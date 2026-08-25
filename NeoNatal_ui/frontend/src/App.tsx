@@ -1,1236 +1,1461 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Activity, Brain, Thermometer, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  Heart, 
+  Wind, 
+  Zap, 
+  Thermometer, 
+  Activity, 
+  AlertCircle, 
+  ArrowRight, 
+  ArrowLeft, 
+  MoveRight, 
+  Volume2, 
+  VolumeX, 
+  Cpu, 
+  Server, 
+  Monitor, 
+  Lock, 
+  User, 
+  Brain, 
+  Sparkles, 
+  ChevronDown, 
+  ChevronUp, 
+  Clock, 
+  FileText, 
+  Baby, 
+  Info 
+} from 'lucide-react';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001';
 
-// Default Fallback Data Structure for the Landing Page Dashboard
-const getInitialDashboardData = () => ({
-  motionMonitoring: {
-    status: "SAFE", // SAFE / MONITOR / ALERT / UNSAFE
-    stillTime: 6,
-    motion: 1.24,
-    confidence: 82,
-    alertActive: false
-  },
-  cryDetection: {
-    status: "normal", // normal / abnormal / distress
-    cryType: "None detected",
-    intensity: 0,
-    duration: 0,
-    confidence: 95,
-    lastDetected: "No cry in last 15 min",
-    audioWaveform: [0.2, 0.5, 0.8, 1.2, 0.9, 0.4, 0.1]
-  },
-  sleepPosition: {
-    position: "Back", // Back, Side, Stomach, Unknown
-    status: "safe", // safe / warning / unsafe
-    riskLevel: "low", // low / medium / high
-    timeInPosition: 45, // minutes
-    confidence: 92,
-    recommendations: "Position is optimal for breathing",
-    positionHistory: [
-      { time: "13:00", position: "Back" },
-      { time: "12:30", position: "Side" },
-      { time: "12:00", position: "Back" }
-    ]
-  },
-  breathingAnalysis: {
-    rate: 42, // breaths per minute
-    pattern: "Regular", // Regular, Irregular, Apnea detected
-    status: "normal", // normal / concerning / critical
-    oxygenLevel: 98, // SpO2 percentage
-    confidence: 89,
-    irregularities: 0,
-    trend: "stable"
-  },
-  faceAnalysis: {
-    faceDetected: true,
-    distressLevel: "none", // none / mild / moderate / severe
-    emotionalState: "calm",
-    facialMovement: "minimal",
-    eyesOpen: false,
-    mouthOpen: false,
-    confidence: 88,
-    alerts: []
-  },
-  patient: {
+const INITIAL_BABIES = [
+  {
     id: "NB-2026-001",
+    name: "Aarav Sharma",
     age: "3 days old",
     weight: "3.2 kg",
+    birthWeight: "3.15 kg",
     gestationalAge: "38 weeks",
     admissionDate: "Jan 21, 2026",
-    status: "Stable"
-  },
-  aiStatus: [
-    { title: "Cry Pattern", value: "Normal", confidence: 92, note: "Audio-based AI analysis", status: "normal" },
-    { title: "Sleep Position", value: "Safe", confidence: 95, note: "Posture classification model", status: "normal" },
-    { title: "Body Temperature", value: "36.8 °C", confidence: 98, note: "Infrared monitoring", status: "normal" }
-  ],
-  vitals: [
-    { title: "Heart Rate", value: 142, unit: "bpm", normalRange: "120-160", status: "normal" },
-    { title: "Respiratory Rate", value: 45, unit: "breaths/min", normalRange: "40-60", status: "normal" },
-    { title: "Oxygen Saturation", value: 98, unit: "%", normalRange: "95-100", status: "normal" }
-  ],
-  alerts: [
-    { type: "normal", message: "All vital signs within normal parameters", timestamp: "Just now" },
-    { type: "warning", message: "Slight increase in respiratory rate detected - monitoring closely", timestamp: "5 mins ago" },
-    { type: "info", message: "Feeding scheduled in 30 minutes", timestamp: "10 mins ago" }
-  ],
-  riskAssessment: {
-    overall: "low",
-    confidence: 94,
-    categories: [
-      { name: "Respiratory", level: "Low", color: "#10b981" },
-      { name: "Cardiac", level: "Low", color: "#10b981" },
-      { name: "Neurological", level: "Low", color: "#10b981" },
-      { name: "Thermal", level: "Low", color: "#10b981" }
+    incubator: "Incubator #01",
+    motherName: "Priya Sharma",
+    deliveryType: "Full-Term Normal Delivery",
+    bloodGroup: "O+",
+    feedingSchedule: "Expressed Breast Milk (q3h)",
+    status: "SAFE",
+    riskLevel: "LOW",
+    riskScore: 12,
+    predictionReasons: [
+      "All vital parameters within physiological target range",
+      "Consistent diaphragmatic movement detected (45 BPM)",
+      "Normal sinus rhythm with stable perfusion (SpO₂ 98%)"
+    ],
+    vitals: { heartRate: 142, respRate: 45, spo2: 98, temp: 36.8 },
+    trends: {
+      heartRate: { direction: "stable", symbol: "→", label: "Stable (142 bpm)" },
+      respRate: { direction: "stable", symbol: "→", label: "Regular (45 bpm)" },
+      spo2: { direction: "stable", symbol: "→", label: "Optimal (98%)" },
+      temp: { direction: "stable", symbol: "→", label: "Normothermic (36.8°C)" }
+    },
+    stillTime: 0,
+    cryStatus: "normal",
+    isLiveSource: true,
+    historyEvents: [
+      { time: "13:52", type: "measurement", desc: "Routine vitals verified — parameters optimal" },
+      { time: "13:30", type: "activity", desc: "Position adjustment — Supine optimal alignment" },
+      { time: "13:00", type: "care", desc: "Scheduled feeding 45ml completed" },
+      { time: "12:45", type: "measurement", desc: "Infrared temperature check: 36.8°C" }
     ]
   },
-  trainingData: [
-    { epoch: 1, accuracy: 62, loss: 0.92 },
-    { epoch: 2, accuracy: 68, loss: 0.81 },
-    { epoch: 3, accuracy: 74, loss: 0.69 },
-    { epoch: 4, accuracy: 81, loss: 0.54 },
-    { epoch: 5, accuracy: 88, loss: 0.38 }
-  ],
-  events: [
-    { time: "13:52", type: "measurement", description: "Vital signs recorded - all normal" },
-    { time: "13:45", type: "alert", description: "Respiratory rate spike detected" },
-    { time: "13:30", type: "activity", description: "Position changed - Back to side" },
-    { time: "13:00", type: "care", description: "Feeding completed successfully" },
-    { time: "12:45", type: "measurement", description: "Temperature check: 36.8°C" },
-    { time: "12:30", type: "activity", description: "Diaper changed" }
-  ]
-});
+  {
+    id: "NB-2026-002",
+    name: "Kiara Patel",
+    age: "5 days old",
+    weight: "2.9 kg",
+    birthWeight: "2.85 kg",
+    gestationalAge: "37 weeks",
+    admissionDate: "Jan 20, 2026",
+    incubator: "Incubator #02",
+    motherName: "Neha Patel",
+    deliveryType: "Elective C-Section (37w)",
+    bloodGroup: "A+",
+    feedingSchedule: "Donor Milk Fortified (q3h)",
+    status: "WARNING",
+    riskLevel: "MODERATE",
+    riskScore: 54,
+    predictionReasons: [
+      "Reduced respiratory frequency (Bradypnea: 25 breaths/min)",
+      "Mild accumulation of stillness duration (2s)",
+      "Oxygen saturation bordering lower threshold (SpO₂ 96%)"
+    ],
+    vitals: { heartRate: 135, respRate: 25, spo2: 96, temp: 36.5 },
+    trends: {
+      heartRate: { direction: "down", symbol: "↓", label: "Decreasing slightly" },
+      respRate: { direction: "down", symbol: "↓", label: "Bradypnea (25 bpm)" },
+      spo2: { direction: "down", symbol: "↓", label: "Borderline (96%)" },
+      temp: { direction: "stable", symbol: "→", label: "Stable (36.5°C)" }
+    },
+    stillTime: 2,
+    cryStatus: "normal",
+    isLiveSource: false,
+    historyEvents: [
+      { time: "13:48", type: "alert", desc: "Bradypnea alert flagged by Random Forest model" },
+      { time: "13:15", type: "measurement", desc: "SpO₂ monitored at 96% — close observation" },
+      { time: "12:30", type: "care", desc: "Thermal blanket recalibrated to 36.5°C" }
+    ]
+  },
+  {
+    id: "NB-2026-003",
+    name: "Aditya Rao",
+    age: "2 days old",
+    weight: "3.1 kg",
+    birthWeight: "3.05 kg",
+    gestationalAge: "39 weeks",
+    admissionDate: "Jan 22, 2026",
+    incubator: "Incubator #03",
+    motherName: "Ananya Rao",
+    deliveryType: "Emergency C-Section",
+    bloodGroup: "B+",
+    feedingSchedule: "TPN / IV Glucose Maintenance",
+    status: "UNSAFE",
+    riskLevel: "HIGH",
+    riskScore: 89,
+    predictionReasons: [
+      "Prolonged stillness (22s) exceeding clinical apnea limit",
+      "Severe bradycardia: Heart rate dropped to 95 BPM (< 100 limit)",
+      "Desaturation event: SpO₂ dropped to 91%",
+      "Mild thermal loss: Temperature 36.2°C"
+    ],
+    vitals: { heartRate: 95, respRate: 0, spo2: 91, temp: 36.2 },
+    trends: {
+      heartRate: { direction: "down", symbol: "↓", label: "Bradycardia (95 bpm)" },
+      respRate: { direction: "down", symbol: "↓", label: "APNEA (0 bpm)" },
+      spo2: { direction: "down", symbol: "↓", label: "Desaturation (91%)" },
+      temp: { direction: "down", symbol: "↓", label: "Hypothermia (36.2°C)" }
+    },
+    stillTime: 22,
+    cryStatus: "normal",
+    isLiveSource: false,
+    historyEvents: [
+      { time: "13:50", type: "alert", desc: "CRITICAL APNEA ALERT: 22s without respiratory motion" },
+      { time: "13:49", type: "alert", desc: "Bradycardia warning: Heart rate below 100 bpm" },
+      { time: "13:20", type: "activity", desc: "Prone positioning recorded" }
+    ]
+  },
+  {
+    id: "NB-2026-004",
+    name: "Riya Sen",
+    age: "6 days old",
+    weight: "3.4 kg",
+    birthWeight: "3.3 kg",
+    gestationalAge: "38 weeks",
+    admissionDate: "Jan 19, 2026",
+    incubator: "Incubator #04",
+    motherName: "Sunita Sen",
+    deliveryType: "Normal Vaginal Delivery",
+    bloodGroup: "AB+",
+    feedingSchedule: "Direct Breastfeeding + Supplement",
+    status: "SAFE",
+    riskLevel: "LOW",
+    riskScore: 8,
+    predictionReasons: [
+      "Vigorous movement and regular breathing frequency (48 BPM)",
+      "Excellent oxygenation: SpO₂ 99%",
+      "Heart rate stable at 145 BPM within ideal zone"
+    ],
+    vitals: { heartRate: 145, respRate: 48, spo2: 99, temp: 36.9 },
+    trends: {
+      heartRate: { direction: "stable", symbol: "→", label: "Optimal (145 bpm)" },
+      respRate: { direction: "stable", symbol: "→", label: "Regular (48 bpm)" },
+      spo2: { direction: "up", symbol: "↑", label: "Excellent (99%)" },
+      temp: { direction: "stable", symbol: "→", label: "Normothermic (36.9°C)" }
+    },
+    stillTime: 0,
+    cryStatus: "normal",
+    isLiveSource: false,
+    historyEvents: [
+      { time: "13:40", type: "measurement", desc: "Vital signs recorded — patient active" },
+      { time: "12:15", type: "care", desc: "Kangaroo Mother Care session completed" }
+    ]
+  },
+  {
+    id: "NB-2026-005",
+    name: "Vivaan Kapoor",
+    age: "4 days old",
+    weight: "2.7 kg",
+    birthWeight: "2.65 kg",
+    gestationalAge: "36 weeks",
+    admissionDate: "Jan 21, 2026",
+    incubator: "Incubator #05",
+    motherName: "Kavita Kapoor",
+    deliveryType: "Preterm Normal Delivery (36w)",
+    bloodGroup: "O-",
+    feedingSchedule: "EBM via Gavage Tube",
+    status: "SAFE",
+    riskLevel: "LOW",
+    riskScore: 22,
+    predictionReasons: [
+      "Elevated respiratory rate (52 BPM) during cry activity",
+      "Vocal cry distress classified by PC3 Bio-Acoustic model",
+      "Oxygen saturation and heart rate responding normally"
+    ],
+    vitals: { heartRate: 149, respRate: 52, spo2: 97, temp: 37.1 },
+    trends: {
+      heartRate: { direction: "up", symbol: "↑", label: "Tachycardia (Cry state)" },
+      respRate: { direction: "up", symbol: "↑", label: "Active (52 bpm)" },
+      spo2: { direction: "stable", symbol: "→", label: "Stable (97%)" },
+      temp: { direction: "stable", symbol: "→", label: "Normal (37.1°C)" }
+    },
+    stillTime: 0,
+    cryStatus: "distress",
+    isLiveSource: false,
+    historyEvents: [
+      { time: "13:45", type: "alert", desc: "Acoustic Cry pattern classified: Hunger cry" },
+      { time: "13:10", type: "care", desc: "Diaper changed, soothing provided" }
+    ]
+  },
+  {
+    id: "NB-2026-006",
+    name: "Ananya Nair",
+    age: "7 days old",
+    weight: "3.3 kg",
+    birthWeight: "3.2 kg",
+    gestationalAge: "39 weeks",
+    admissionDate: "Jan 18, 2026",
+    incubator: "Incubator #06 (Discharged)",
+    motherName: "Deepa Nair",
+    deliveryType: "Normal Delivery",
+    bloodGroup: "B+",
+    feedingSchedule: "Full Oral Feeding",
+    status: "OFFLINE",
+    riskLevel: "DISCHARGED",
+    riskScore: 0,
+    predictionReasons: [
+      "Incubator offline — Patient safely discharged to step-down nursery"
+    ],
+    vitals: { heartRate: 0, respRate: 0, spo2: 0, temp: 0 },
+    trends: {
+      heartRate: { direction: "stable", symbol: "—", label: "Offline" },
+      respRate: { direction: "stable", symbol: "—", label: "Offline" },
+      spo2: { direction: "stable", symbol: "—", label: "Offline" },
+      temp: { direction: "stable", symbol: "—", label: "Offline" }
+    },
+    stillTime: 0,
+    cryStatus: "normal",
+    isLiveSource: false,
+    historyEvents: [
+      { time: "10:00", type: "care", desc: "Discharge clearance signed by senior neonatologist" }
+    ]
+  }
+];
+
+const generateInitialWaveforms = () => Array.from({ length: 30 }, (_, i) => ({
+  time: i,
+  breathing: 40 + Math.sin(i * 0.5) * 6,
+  motion: 1.2 + Math.cos(i * 0.4) * 0.4,
+  heartRate: 140 + Math.sin(i * 0.3) * 4,
+  spo2: 98
+}));
 
 function App() {
-  const [data, setData] = useState<any>(getInitialDashboardData());
-  const [lastUpdated, setLastUpdated] = useState<string>(new Date().toLocaleTimeString());
+  const [activeView, setActiveView] = useState<'landing' | 'login' | 'dashboard'>('landing');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [babies, setBabies] = useState<any[]>(INITIAL_BABIES);
+  const [selectedBabyId, setSelectedBabyId] = useState<string>("NB-2026-001");
+  const [waveformData, setWaveformData] = useState<any[]>(generateInitialWaveforms());
+  const [isMasterMuted, setIsMasterMuted] = useState<boolean>(false);
+  const [loginUser, setLoginUser] = useState<string>('doctor');
+  const [loginPass, setLoginPass] = useState<string>('');
+  const [loginError, setLoginError] = useState<string>('');
 
-  // Load data on mount and poll for backend updates
   useEffect(() => {
-    const loadData = async () => {
+    if (activeView !== 'dashboard') return;
+
+    const pollBackend = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/dashboard`);
-        if (!response.ok) throw new Error('Using local fallback simulation');
-        const dashboardData = await response.json();
-        
-        // Merge backend format with original landing dashboard structure
-        setData((prev: any) => ({
-          ...prev,
-          motionMonitoring: {
-            ...prev.motionMonitoring,
-            ...(dashboardData.motionMonitoring || {}),
-            motion: typeof dashboardData.motionMonitoring?.motion === 'number' 
-              ? dashboardData.motionMonitoring.motion 
-              : prev.motionMonitoring.motion,
-            stillTime: typeof dashboardData.motionMonitoring?.stillTime === 'number'
-              ? dashboardData.motionMonitoring.stillTime
-              : prev.motionMonitoring.stillTime,
-            status: dashboardData.motionMonitoring?.status || prev.motionMonitoring.status
-          },
-          cryDetection: {
-            ...prev.cryDetection,
-            ...(dashboardData.cryDetection || {})
-          },
-          sleepPosition: {
-            ...prev.sleepPosition,
-            ...(dashboardData.sleepPosition || {})
-          },
-          vitals: [
-            { 
-              title: "Heart Rate", 
-              value: dashboardData.babies?.[0]?.vitals?.heartRate || 142, 
-              unit: "bpm", 
-              normalRange: "120-160", 
-              status: (dashboardData.babies?.[0]?.vitals?.heartRate < 100 || dashboardData.babies?.[0]?.vitals?.heartRate > 170) ? "alert" : "normal" 
-            },
-            { 
-              title: "Respiratory Rate", 
-              value: dashboardData.babies?.[0]?.vitals?.respRate ?? dashboardData.motionMonitoring?.breathingRate ?? 45, 
-              unit: "breaths/min", 
-              normalRange: "40-60", 
-              status: (dashboardData.motionMonitoring?.breathingStatus === "APNEA" || dashboardData.babies?.[0]?.vitals?.respRate === 0) ? "alert" : "normal" 
-            },
-            { 
-              title: "Oxygen Saturation", 
-              value: dashboardData.babies?.[0]?.vitals?.spo2 || 98, 
-              unit: "%", 
-              normalRange: "95-100", 
-              status: (dashboardData.babies?.[0]?.vitals?.spo2 < 93) ? "alert" : "normal" 
-            }
-          ]
-        }));
-      } catch (error) {
-        // Fallback simulation jitter
-        setData((prev: any) => ({
-          ...prev,
-          motionMonitoring: {
-            ...prev.motionMonitoring,
-            motion: +(Math.random() * 0.8 + 0.8).toFixed(2)
+        const res = await fetch(`${API_BASE_URL}/api/dashboard`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.babies && Array.isArray(json.babies)) {
+            setBabies(prevBabies => prevBabies.map(b => {
+              const remote = json.babies.find((rb: any) => rb.id === b.id);
+              if (!remote) return b;
+              return {
+                ...b,
+                status: remote.status || b.status,
+                vitals: { ...b.vitals, ...(remote.vitals || {}) },
+                stillTime: typeof remote.stillTime === 'number' ? remote.stillTime : b.stillTime
+              };
+            }));
           }
+        }
+      } catch (err) {
+        setBabies(prev => prev.map(b => {
+          if (b.status === 'OFFLINE' || b.id === 'NB-2026-003') return b;
+          return {
+            ...b,
+            vitals: {
+              ...b.vitals,
+              heartRate: Math.max(120, Math.min(160, b.vitals.heartRate + Math.floor(Math.random() * 3 - 1))),
+              spo2: Math.max(95, Math.min(100, b.vitals.spo2 + (Math.random() > 0.8 ? (Math.random() > 0.5 ? 1 : -1) : 0)))
+            }
+          };
         }));
       }
+
+      setWaveformData(prev => {
+        const active = babies.find(b => b.id === selectedBabyId) || babies[0];
+        const newPoint = {
+          time: prev.length,
+          breathing: active.vitals.respRate || 0,
+          motion: active.status === 'UNSAFE' ? 0.05 : +(Math.random() * 0.8 + 1.1).toFixed(2),
+          heartRate: active.vitals.heartRate || 140,
+          spo2: active.vitals.spo2 || 98
+        };
+        return [...prev.slice(-29), newPoint];
+      });
     };
 
-    loadData();
-    const interval = setInterval(() => {
-      loadData();
-      setLastUpdated(new Date().toLocaleTimeString());
-    }, 1000);
-
+    const interval = setInterval(pollBackend, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeView, selectedBabyId, babies]);
 
-  if (!data) {
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginPass === '1234' || loginPass === 'admin') {
+      setIsAuthenticated(true);
+      setActiveView('dashboard');
+      setLoginError('');
+    } else {
+      setLoginError('Invalid credentials. Demo Password is: 1234');
+    }
+  };
+
+  const activeBaby = babies.find(b => b.id === selectedBabyId) || babies[0];
+  const anyCritical = babies.some(b => b.status === 'UNSAFE');
+
+  // =========================================================================
+  // VIEW 1: LANDING PAGE
+  // =========================================================================
+  if (activeView === 'landing') {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '18px', color: '#64748b' }}>
-        Loading dashboard data...
+      <div style={{ minHeight: '100vh', background: 'var(--background)', display: 'flex', flexDirection: 'column' }}>
+        
+        {/* Navigation Bar */}
+        <header style={{ 
+          background: 'rgba(255, 255, 255, 0.95)', 
+          backdropFilter: 'blur(10px)', 
+          borderBottom: '1px solid var(--surface-border)', 
+          position: 'sticky', 
+          top: 0, 
+          zIndex: 100, 
+          padding: '16px 32px' 
+        }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            
+            {/* Brand Logo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '42px', height: '42px', background: 'linear-gradient(135deg, var(--primary), #0369A1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                <Baby size={24} />
+              </div>
+              <div>
+                <span style={{ fontSize: '20px', fontWeight: 900, letterSpacing: '-0.5px', color: 'var(--text-main)' }}>NAVAAYU</span>
+                <span style={{ display: 'block', fontSize: '10px', fontWeight: 800, color: 'var(--primary)', letterSpacing: '1px' }}>INTELLIGENT NEONATAL MONITORING</span>
+              </div>
+            </div>
+
+            {/* Nav Links */}
+            <nav style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
+              <a href="#about" style={{ textDecoration: 'none', color: 'var(--text-muted)', fontSize: '14px', fontWeight: 600 }}>What is NAVAAYU?</a>
+              <a href="#problem" style={{ textDecoration: 'none', color: 'var(--text-muted)', fontSize: '14px', fontWeight: 600 }}>The Problem</a>
+              <a href="#monitors" style={{ textDecoration: 'none', color: 'var(--text-muted)', fontSize: '14px', fontWeight: 600 }}>Parameters</a>
+              <a href="#ai" style={{ textDecoration: 'none', color: 'var(--text-muted)', fontSize: '14px', fontWeight: 600 }}>ML Risk Model</a>
+              <a href="#architecture" style={{ textDecoration: 'none', color: 'var(--text-muted)', fontSize: '14px', fontWeight: 600 }}>3-PC Architecture</a>
+            </nav>
+
+            {/* CTA */}
+            <button 
+              onClick={() => setActiveView(isAuthenticated ? 'dashboard' : 'login')} 
+              className="btn-primary"
+            >
+              Enter Dashboard <ArrowRight size={16} />
+            </button>
+
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <section id="about" className="hero-wrapper">
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '30px', fontSize: '12px', fontWeight: 800, marginBottom: '24px' }}>
+              <Sparkles size={14} /> AI-ASSISTED CLINICAL NEONATAL TELEMETRY
+            </div>
+
+            <h1 style={{ fontSize: '56px', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-1.5px', marginBottom: '8px', lineHeight: 1.1 }}>
+              NAVAAYU
+            </h1>
+
+            <h2 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--primary)', marginBottom: '24px', letterSpacing: '-0.5px' }}>
+              Intelligent Neonatal Monitoring
+            </h2>
+
+            <p style={{ fontSize: '18px', color: 'var(--text-muted)', lineHeight: 1.6, maxWidth: '760px', margin: '0 auto 36px', fontWeight: 500 }}>
+              NAVAAYU is an AI-assisted neonatal monitoring system designed to continuously monitor vital parameters, identify risk patterns and provide healthcare teams with a clear view of a baby's condition.
+            </p>
+
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', alignItems: 'center' }}>
+              <button 
+                onClick={() => setActiveView(isAuthenticated ? 'dashboard' : 'login')}
+                className="btn-primary"
+                style={{ padding: '14px 32px', fontSize: '16px' }}
+              >
+                Enter Dashboard <ArrowRight size={18} />
+              </button>
+              <a 
+                href="#problem"
+                className="btn-secondary"
+                style={{ padding: '14px 32px', fontSize: '16px' }}
+              >
+                Explore NAVAAYU
+              </a>
+            </div>
+
+            {/* Medical / Technology Flow Visual */}
+            <div style={{ marginTop: '60px', background: 'white', border: '1.5px solid var(--surface-border)', borderRadius: '24px', padding: '32px', boxShadow: 'var(--shadow-lg)' }}>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '20px' }}>
+                End-to-End Clinical Flow
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                <div className="workflow-step">
+                  <div style={{ fontSize: '24px', marginBottom: '6px' }}>👶</div>
+                  <div style={{ fontWeight: 800, fontSize: '13px' }}>Neonatal Monitoring</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Incubator Sensors</div>
+                </div>
+                <MoveRight size={20} color="var(--primary)" />
+                <div className="workflow-step">
+                  <div style={{ fontSize: '24px', marginBottom: '6px' }}>📊</div>
+                  <div style={{ fontWeight: 800, fontSize: '13px' }}>Vital Signs</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>HR, SpO₂, RR, Temp</div>
+                </div>
+                <MoveRight size={20} color="var(--primary)" />
+                <div className="workflow-step" style={{ borderColor: 'var(--lavender)' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '6px' }}>🧠</div>
+                  <div style={{ fontWeight: 800, fontSize: '13px', color: 'var(--lavender)' }}>AI Analysis</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Random Forest Model</div>
+                </div>
+                <MoveRight size={20} color="var(--primary)" />
+                <div className="workflow-step">
+                  <div style={{ fontSize: '24px', marginBottom: '6px' }}>⚠️</div>
+                  <div style={{ fontWeight: 800, fontSize: '13px' }}>Risk Prediction</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Pattern Detection</div>
+                </div>
+                <MoveRight size={20} color="var(--primary)" />
+                <div className="workflow-step" style={{ borderColor: 'var(--primary)', background: 'var(--primary-light)' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '6px' }}>🩺</div>
+                  <div style={{ fontWeight: 800, fontSize: '13px', color: 'var(--primary)' }}>NAVAAYU Dashboard</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Clinical View</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* Section: The Problem */}
+        <section id="problem" style={{ padding: '80px 24px', background: 'white', borderTop: '1px solid var(--surface-border)', borderBottom: '1px solid var(--surface-border)' }}>
+          <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ color: 'var(--secondary)', fontSize: '12px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>
+              CRITICAL CLINICAL NEED
+            </div>
+            <h2 style={{ fontSize: '36px', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-1px', marginBottom: '20px' }}>
+              Every second matters in neonatal care.
+            </h2>
+            <p style={{ fontSize: '17px', color: 'var(--text-muted)', lineHeight: 1.7, maxWidth: '800px', margin: '0 auto 30px' }}>
+              Neonatal patients require continuous observation because subtle changes in vital parameters can indicate sudden clinical deterioration or onset of apnea. NAVAAYU helps organize this continuous monitoring and provides an AI-assisted risk indication to support the vigilance of healthcare teams.
+            </p>
+            <div style={{ padding: '16px 24px', background: '#F8FAFC', borderRadius: '16px', border: '1px solid var(--surface-border)', display: 'inline-flex', alignItems: 'center', gap: '12px' }}>
+              <Info size={18} color="var(--primary)" />
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                NAVAAYU is an assistive monitoring tool designed to alert staff to risk patterns — it does not replace medical judgment or clinical diagnosis.
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* Section: What NAVAAYU Monitors (4 Core Parameters) */}
+        <section id="monitors" style={{ padding: '80px 24px', background: 'var(--background)' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+              <div style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                CONTINUOUS PHYSIOLOGICAL TELEMETRY
+              </div>
+              <h2 style={{ fontSize: '36px', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-1px' }}>
+                What NAVAAYU Monitors
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '16px', marginTop: '8px' }}>
+                Continuous tracking of essential neonatal physiological vital signs.
+              </p>
+            </div>
+
+            <div className="params-4grid">
+              
+              {/* Parameter 1: Heart Rate */}
+              <div className="medical-card" style={{ padding: '32px' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--secondary-light)', color: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                  <Heart size={28} />
+                </div>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px' }}>
+                  ❤️ Heart Rate
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
+                  Continuous monitoring of heart-rate information, rhythm dynamics, and early detection of bradycardia or tachycardia episodes.
+                </p>
+                <div style={{ marginTop: '20px', fontSize: '12px', fontWeight: 700, color: 'var(--secondary)' }}>
+                  Normal Range: 120 – 160 BPM
+                </div>
+              </div>
+
+              {/* Parameter 2: SpO2 */}
+              <div className="medical-card" style={{ padding: '32px' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                  <Zap size={28} />
+                </div>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px' }}>
+                  🫁 SpO₂
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
+                  Continuous monitoring of blood oxygen saturation levels with instant alerts for hypoxic desaturation events.
+                </p>
+                <div style={{ marginTop: '20px', fontSize: '12px', fontWeight: 700, color: 'var(--primary)' }}>
+                  Target Range: 95% – 100%
+                </div>
+              </div>
+
+              {/* Parameter 3: Respiratory Rate */}
+              <div className="medical-card" style={{ padding: '32px' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--mint-light)', color: 'var(--mint)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                  <Wind size={28} />
+                </div>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px' }}>
+                  🌬️ Respiratory Rate
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
+                  Monitoring respiratory activity, breathing patterns, chest displacement, and stillness countdowns for apnea identification.
+                </p>
+                <div style={{ marginTop: '20px', fontSize: '12px', fontWeight: 700, color: 'var(--mint)' }}>
+                  Normal Range: 40 – 60 Breaths/min
+                </div>
+              </div>
+
+              {/* Parameter 4: Temperature */}
+              <div className="medical-card" style={{ padding: '32px' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--accent-light)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                  <Thermometer size={28} />
+                </div>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px' }}>
+                  🌡️ Temperature
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
+                  Infrared thermal monitoring to ensure stable neonatal normothermia and flag early cold stress or fever onset.
+                </p>
+                <div style={{ marginTop: '20px', fontSize: '12px', fontWeight: 700, color: 'var(--accent)' }}>
+                  Normal Range: 36.5°C – 37.5°C
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* Section: AI Random Forest Model */}
+        <section id="ai" style={{ padding: '80px 24px', background: 'white', borderTop: '1px solid var(--surface-border)', borderBottom: '1px solid var(--surface-border)' }}>
+          <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ color: 'var(--lavender)', fontSize: '12px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>
+              MACHINE LEARNING PIPELINE
+            </div>
+            <h2 style={{ fontSize: '36px', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-1px', marginBottom: '16px' }}>
+              From Vital Signs to Risk Prediction
+            </h2>
+            <p style={{ fontSize: '17px', color: 'var(--text-muted)', lineHeight: 1.7, maxWidth: '780px', margin: '0 auto 40px' }}>
+              NAVAAYU uses a <strong>Random Forest machine-learning model</strong> to analyze neonatal vital-sign data and provide a risk prediction that can support healthcare professionals in monitoring the patient.
+            </p>
+
+            {/* AI Architecture Box */}
+            <div style={{ background: '#F8FAFC', border: '2px solid var(--surface-border)', borderRadius: '24px', padding: '36px', textAlign: 'left' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ textAlign: 'center', flex: 1, minWidth: '120px' }}>
+                  <div style={{ padding: '12px', background: 'white', borderRadius: '14px', border: '1px solid var(--surface-border)', fontWeight: 800, fontSize: '13px' }}>
+                    Vital Data
+                  </div>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>HR, SpO2, RR, Temp</span>
+                </div>
+                <ArrowRight color="var(--lavender)" size={20} />
+                <div style={{ textAlign: 'center', flex: 1, minWidth: '120px' }}>
+                  <div style={{ padding: '12px', background: 'white', borderRadius: '14px', border: '1px solid var(--surface-border)', fontWeight: 800, fontSize: '13px' }}>
+                    Preprocessing
+                  </div>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Normalization</span>
+                </div>
+                <ArrowRight color="var(--lavender)" size={20} />
+                <div style={{ textAlign: 'center', flex: 1, minWidth: '140px' }}>
+                  <div style={{ padding: '12px', background: 'var(--lavender-light)', color: 'var(--lavender)', borderRadius: '14px', border: '2px solid var(--lavender)', fontWeight: 900, fontSize: '13px' }}>
+                    Random Forest Model
+                  </div>
+                  <span style={{ fontSize: '11px', color: 'var(--lavender)', marginTop: '4px', display: 'block', fontWeight: 700 }}>Risk Classifier</span>
+                </div>
+                <ArrowRight color="var(--lavender)" size={20} />
+                <div style={{ textAlign: 'center', flex: 1, minWidth: '120px' }}>
+                  <div style={{ padding: '12px', background: 'white', borderRadius: '14px', border: '1px solid var(--surface-border)', fontWeight: 800, fontSize: '13px' }}>
+                    Risk Prediction
+                  </div>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Low / Mod / High</span>
+                </div>
+                <ArrowRight color="var(--lavender)" size={20} />
+                <div style={{ textAlign: 'center', flex: 1, minWidth: '120px' }}>
+                  <div style={{ padding: '12px', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '14px', border: '1px solid var(--primary)', fontWeight: 800, fontSize: '13px' }}>
+                    Dashboard
+                  </div>
+                  <span style={{ fontSize: '11px', color: 'var(--primary)', marginTop: '4px', display: 'block', fontWeight: 700 }}>Telemetry View</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* Section: 3-PC Architecture */}
+        <section id="architecture" style={{ padding: '80px 24px', background: 'var(--background)' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+              <div style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                DISTRIBUTED HARDWARE ARCHITECTURE
+              </div>
+              <h2 style={{ fontSize: '36px', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-1px' }}>
+                The 3-PC Prototype Architecture
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '16px', marginTop: '8px', maxWidth: '750px', margin: '8px auto 0' }}>
+                The prototype uses a three-PC architecture to separate data generation/monitoring, AI processing and dashboard visualization.
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+              
+              {/* PC 1 */}
+              <div className="pc-node-card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Server size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-main)' }}>PC 1: Data Node</h3>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>INCUBATOR TELEMETRY</span>
+                  </div>
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
+                  Collects sensor input, frame captures, and vital signs directly from patient bedside monitoring apparatus.
+                </p>
+                <div style={{ marginTop: '16px', padding: '8px 12px', background: '#F8FAFC', borderRadius: '8px', fontSize: '12px', fontWeight: 700, color: 'var(--text-main)' }}>
+                  Outputs: Raw Vital Data & Video Stream
+                </div>
+              </div>
+
+              {/* PC 2 */}
+              <div className="pc-node-card" style={{ borderColor: 'var(--lavender)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'var(--lavender-light)', color: 'var(--lavender)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Cpu size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-main)' }}>PC 2: ML Engine</h3>
+                    <span style={{ fontSize: '11px', color: 'var(--lavender)', fontWeight: 700 }}>AI PROCESSING & PREDICTION</span>
+                  </div>
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
+                  Runs OpenCV motion detection algorithms and the Random Forest machine-learning risk prediction model in real time.
+                </p>
+                <div style={{ marginTop: '16px', padding: '8px 12px', background: 'var(--lavender-light)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, color: 'var(--lavender)' }}>
+                  Outputs: ML Predictions & Apnea Alerts
+                </div>
+              </div>
+
+              {/* PC 3 */}
+              <div className="pc-node-card" style={{ borderColor: 'var(--primary)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Monitor size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-main)' }}>PC 3: NAVAAYU Dashboard</h3>
+                    <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 700 }}>CENTRAL CLINICAL DISPLAY</span>
+                  </div>
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
+                  Displays ward overview, individual patient telemetry, directional trend indicators, and event audit histories for doctors.
+                </p>
+                <div style={{ marginTop: '16px', padding: '8px 12px', background: 'var(--primary-light)', borderRadius: '8px', fontSize: '12px', fontWeight: 700, color: 'var(--primary)' }}>
+                  Outputs: Live Interactive Visualization
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* Section: Final CTA */}
+        <section style={{ padding: '80px 24px', background: 'white', textAlign: 'center', borderTop: '1px solid var(--surface-border)' }}>
+          <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+            <h2 style={{ fontSize: '40px', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-1px', marginBottom: '12px' }}>
+              Smarter Monitoring. Clearer Decisions.
+            </h2>
+            <p style={{ fontSize: '17px', color: 'var(--text-muted)', marginBottom: '32px' }}>
+              Explore the NAVAAYU neonatal monitoring dashboard.
+            </p>
+            <button 
+              onClick={() => setActiveView(isAuthenticated ? 'dashboard' : 'login')} 
+              className="btn-primary"
+              style={{ padding: '16px 36px', fontSize: '17px' }}
+            >
+              Enter NAVAAYU <ArrowRight size={20} />
+            </button>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer style={{ padding: '30px 24px', background: '#0F172A', color: '#94A3B8', textAlign: 'center', fontSize: '13px' }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white', fontWeight: 800 }}>
+              <Baby size={18} color="var(--primary)" /> NAVAAYU Neonatal Monitoring
+            </div>
+            <div>
+              © 2026 NAVAAYU. Intelligent AI-Assisted Clinical Telemetry.
+            </div>
+          </div>
+        </footer>
+
       </div>
     );
   }
 
-  return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      
-      {/* Top Header Banner */}
-      <div style={{ backgroundColor: '#ffffff', padding: '24px 48px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', borderBottom: '3px solid #3b82f6' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
-              <div style={{ width: '48px', height: '48px', backgroundColor: '#3b82f6', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#ffffff', fontWeight: 700 }}>
-                👶
-              </div>
-              <div>
-                <h1 style={{ fontSize: '28px', margin: 0, color: '#0f172a', fontWeight: 700, letterSpacing: '-0.5px' }}>
-                  Neonatal AI Monitoring System
-                </h1>
-                <p style={{ color: '#64748b', fontSize: '14px', margin: 0, marginTop: '2px' }}>
-                  Real-time AI-assisted neonatal care & monitoring
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <div style={{ backgroundColor: '#f0fdf4', padding: '8px 16px', borderRadius: '8px', border: '1px solid #86efac' }}>
-              <p style={{ fontSize: '12px', color: '#15803d', margin: 0, fontWeight: 700 }}>
-                🟢 System Active
-              </p>
-            </div>
-            <button 
-              onClick={() => window.print()}
-              style={{ padding: '10px 20px', backgroundColor: '#3b82f6', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 4px rgba(59,130,246,0.3)' }}
-            >
-              📊 Export Report
-            </button>
-            <button 
-              onClick={() => alert("Emergency protocol dispatched to NICU station.")}
-              style={{ padding: '10px 20px', backgroundColor: '#ef4444', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 4px rgba(239,68,68,0.3)' }}
-            >
-              🚨 Emergency Contact
-            </button>
-          </div>
-        </div>
-
-        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '32px', fontSize: '13px' }}>
-          <span style={{ color: '#64748b' }}>
-            <strong style={{ color: '#0f172a' }}>Last Updated:</strong> {lastUpdated}
-          </span>
-          <span style={{ color: '#64748b' }}>
-            <strong style={{ color: '#0f172a' }}>Monitoring Since:</strong> Jan 21, 2026 08:30 AM
-          </span>
-          <span style={{ color: '#64748b' }}>
-            <strong style={{ color: '#0f172a' }}>Session Duration:</strong> 5h 22m
-          </span>
-        </div>
-      </div>
-
-      {/* Main Content Workspace */}
-      <div style={{ padding: '32px 48px', maxWidth: '1600px', margin: '0 auto' }}>
+  // =========================================================================
+  // VIEW 2: LOGIN PAGE (WITH 3D ANIMATED MEDICAL ORB BACKGROUND)
+  // =========================================================================
+  if (activeView === 'login') {
+    return (
+      <div className="login-bg-container">
         
-        {/* 1. Live Baby Monitor + Real-Time Motion Monitoring */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
-          <SectionContainer title="Live Baby Monitor" accentColor="#3b82f6">
-            <CameraMonitor motionData={data.motionMonitoring} />
-          </SectionContainer>
-          <SectionContainer title="Real-Time Motion Monitoring" accentColor="#3b82f6">
-            <MotionMonitoringCard motion={data.motionMonitoring} />
-          </SectionContainer>
-        </div>
+        {/* Floating 3D Orbs */}
+        <div className="floating-orb orb-1" />
+        <div className="floating-orb orb-2" />
+        <div className="floating-orb orb-3" />
+        <div className="mesh-grid-overlay" />
 
-        {/* 2. Patient Information Panel */}
-        <PatientInfoPanel patient={data.patient} />
-        <div style={{ height: '32px' }} />
-
-        {/* 3. AI Detection Systems (Cry, Sleep Position, Breathing, Face) */}
-        <SectionContainer title="AI Detection Systems" accentColor="#8b5cf6">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <CryDetectionCard cry={data.cryDetection} />
-            <SleepPositionCard sleep={data.sleepPosition} />
-            <BreathingAnalysisCard breathing={data.breathingAnalysis} />
-            <FaceAnalysisCard face={data.faceAnalysis} />
-          </div>
-        </SectionContainer>
-
-        {/* 4. AI-Powered Health Monitoring Cards */}
-        <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '12px', marginBottom: '32px', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <div style={{ width: '4px', height: '24px', backgroundColor: '#8b5cf6', borderRadius: '2px' }} />
-            <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a', fontWeight: 600 }}>
-              AI-Powered Health Monitoring
-            </h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-            {data.aiStatus?.map((item: any, idx: number) => (
-              <StatusCard key={idx} {...item} />
-            ))}
-          </div>
-        </div>
-
-        {/* 5. Vital Signs Monitoring */}
-        <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '12px', marginBottom: '32px', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <div style={{ width: '4px', height: '24px', backgroundColor: '#ef4444', borderRadius: '2px' }} />
-            <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a', fontWeight: 600 }}>
-              Vital Signs Monitoring
-            </h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-            {data.vitals?.map((vital: any, idx: number) => (
-              <VitalSignCard key={idx} {...vital} />
-            ))}
-          </div>
-        </div>
-
-        {/* 6. Recent Events & AI Model Performance */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
-          <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ width: '4px', height: '24px', backgroundColor: '#10b981', borderRadius: '2px' }} />
-              <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a', fontWeight: 600 }}>
-                Recent Events
-              </h2>
-            </div>
-            <EventTimeline events={data.events || []} />
-          </div>
-
-          <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ width: '4px', height: '24px', backgroundColor: '#f59e0b', borderRadius: '2px' }} />
-              <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a', fontWeight: 600 }}>
-                AI Model Performance
-              </h2>
-            </div>
-            <TrainingChart data={data.trainingData || []} />
-          </div>
-        </div>
-
-        {/* 7. System Alerts & Notifications */}
-        <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '12px', marginBottom: '32px', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <div style={{ width: '4px', height: '24px', backgroundColor: '#06b6d4', borderRadius: '2px' }} />
-            <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a', fontWeight: 600 }}>
-              System Alerts & Notifications
-            </h2>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {data.alerts?.map((alert: any, idx: number) => (
-              <AlertBox key={idx} {...alert} />
-            ))}
-          </div>
-        </div>
-
-        {/* 8. Risk Assessment */}
-        <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <div style={{ width: '4px', height: '24px', backgroundColor: '#ec4899', borderRadius: '2px' }} />
-            <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a', fontWeight: 600 }}>
-              Risk Assessment
-            </h2>
-          </div>
-          <RiskLevelPanel risk={data.riskAssessment} />
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
-// Reusable Section Wrapper
-function SectionContainer({ title, accentColor, children }: { title: string; accentColor: string; children: React.ReactNode }) {
-  return (
-    <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '12px', marginBottom: '32px', border: '1px solid #e2e8f0' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <div style={{ width: '4px', height: '24px', backgroundColor: accentColor, borderRadius: '2px' }} />
-        <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a', fontWeight: 600 }}>{title}</h2>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// Cry Detection Card
-function CryDetectionCard({ cry }: { cry: any }) {
-  const statusConfig: Record<string, { color: string; bg: string; icon: string }> = {
-    normal: { color: '#10b981', bg: '#f0fdf4', icon: '🔇' },
-    abnormal: { color: '#f59e0b', bg: '#fffbeb', icon: '🔔' },
-    distress: { color: '#ef4444', bg: '#fef2f2', icon: '🚨' }
-  };
-  const config = statusConfig[cry?.status] || statusConfig.normal;
-  return (
-    <div style={{ backgroundColor: '#fafafa', borderRadius: '10px', padding: '24px', border: '2px solid #e2e8f0', borderLeftWidth: '5px', borderLeftColor: config.color }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '24px' }}>{config.icon}</span>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Cry Detection</h3>
-        </div>
-        <div style={{ backgroundColor: config.bg, padding: '6px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, color: config.color }}>
-          {cry?.status?.toUpperCase() || 'NORMAL'}
-        </div>
-      </div>
-      <div style={{ marginBottom: '16px' }}>
-        <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px' }}>Current Status</p>
-        <p style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a', margin: 0 }}>{cry?.cryType || 'None detected'}</p>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-        <MetricBox label="Intensity" value={`${cry?.intensity || 0}`} unit="%" color={cry?.intensity > 70 ? '#ef4444' : '#64748b'} />
-        <MetricBox label="Duration" value={`${cry?.duration || 0}`} unit="sec" color="#64748b" />
-      </div>
-      <div style={{ backgroundColor: '#ffffff', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-        <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
-          <strong style={{ color: '#0f172a' }}>Last Detection:</strong> {cry?.lastDetected || 'No cry in last 15 min'}
-        </p>
-        <p style={{ fontSize: '12px', color: '#10b981', margin: 0, marginTop: '4px' }}>
-          ✓ {cry?.confidence || 95}% Confidence
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Sleep Position Monitoring Card
-function SleepPositionCard({ sleep }: { sleep: any }) {
-  const statusConfig: Record<string, { color: string; bg: string; icon: string }> = {
-    safe: { color: '#10b981', bg: '#f0fdf4', icon: '✓' },
-    warning: { color: '#f59e0b', bg: '#fffbeb', icon: '⚠' },
-    unsafe: { color: '#ef4444', bg: '#fef2f2', icon: '✗' }
-  };
-  const config = statusConfig[sleep?.status] || statusConfig.safe;
-  return (
-    <div style={{ backgroundColor: '#fafafa', borderRadius: '10px', padding: '24px', border: '2px solid #e2e8f0', borderLeftWidth: '5px', borderLeftColor: config.color }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Brain size={24} color={config.color} />
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Sleep Position</h3>
-        </div>
-        <div style={{ backgroundColor: config.bg, padding: '6px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, color: config.color }}>
-          {config.icon} {sleep?.status?.toUpperCase() || 'SAFE'}
-        </div>
-      </div>
-      <div style={{ marginBottom: '16px' }}>
-        <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px' }}>Current Position</p>
-        <p style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a', margin: 0 }}>{sleep?.position || 'Back'}</p>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-        <MetricBox label="Time in Position" value={`${sleep?.timeInPosition || 0}`} unit="min" color="#64748b" />
-        <MetricBox label="Risk Level" value={sleep?.riskLevel || 'low'} unit="" color={config.color} />
-      </div>
-      <div style={{ backgroundColor: config.bg, padding: '10px', borderRadius: '8px', marginBottom: '12px' }}>
-        <p style={{ fontSize: '12px', color: config.color, margin: 0, fontWeight: 500 }}>
-          💡 {sleep?.recommendations || 'Position is optimal for breathing'}
-        </p>
-      </div>
-      <div style={{ backgroundColor: '#ffffff', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-        <p style={{ fontSize: '11px', color: '#64748b', margin: 0, marginBottom: '6px' }}>
-          <strong>Position History:</strong>
-        </p>
-        {(sleep?.positionHistory || []).slice(0, 3).map((h: any, idx: number) => (
-          <div key={idx} style={{ fontSize: '11px', color: '#64748b', marginBottom: '2px' }}>
-            {h.time} - {h.position}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Breathing Pattern Analysis Card
-function BreathingAnalysisCard({ breathing }: { breathing: any }) {
-  const statusConfig: Record<string, { color: string; bg: string }> = {
-    normal: { color: '#10b981', bg: '#f0fdf4' },
-    concerning: { color: '#f59e0b', bg: '#fffbeb' },
-    critical: { color: '#ef4444', bg: '#fef2f2' }
-  };
-  const config = statusConfig[breathing?.status] || statusConfig.normal;
-  return (
-    <div style={{ backgroundColor: '#fafafa', borderRadius: '10px', padding: '24px', border: '2px solid #e2e8f0', borderLeftWidth: '5px', borderLeftColor: config.color }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Activity size={24} color={config.color} />
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Breathing Analysis</h3>
-        </div>
-        <div style={{ backgroundColor: config.bg, padding: '6px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, color: config.color }}>
-          {breathing?.status?.toUpperCase() || 'NORMAL'}
-        </div>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-        <div>
-          <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px' }}>Breathing Rate</p>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <p style={{ fontSize: '32px', fontWeight: 700, color: '#0f172a', margin: 0 }}>{breathing?.rate || 42}</p>
-            <p style={{ fontSize: '14px', color: '#64748b' }}>bpm</p>
-          </div>
-        </div>
-        <div>
-          <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px' }}>O₂ Saturation</p>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <p style={{ fontSize: '32px', fontWeight: 700, color: '#10b981', margin: 0 }}>{breathing?.oxygenLevel || 98}</p>
-            <p style={{ fontSize: '14px', color: '#64748b' }}>%</p>
-          </div>
-        </div>
-      </div>
-      <div style={{ backgroundColor: '#ffffff', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
-        <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
-          <strong style={{ color: '#0f172a' }}>Pattern:</strong> {breathing?.pattern || 'Regular'}
-        </p>
-        <p style={{ fontSize: '12px', color: '#64748b', margin: 0, marginTop: '4px' }}>
-          <strong style={{ color: '#0f172a' }}>Trend:</strong> {breathing?.trend || 'stable'}
-        </p>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#64748b' }}>
-        <span>Irregularities: <strong style={{ color: config.color }}>{breathing?.irregularities || 0}</strong></span>
-        <span>Confidence: <strong style={{ color: '#10b981' }}>{breathing?.confidence || 89}%</strong></span>
-      </div>
-    </div>
-  );
-}
-
-// Face & Distress Detection Card
-function FaceAnalysisCard({ face }: { face: any }) {
-  const distressConfig: Record<string, { color: string; bg: string; label: string }> = {
-    none: { color: '#10b981', bg: '#f0fdf4', label: 'No Distress' },
-    mild: { color: '#3b82f6', bg: '#eff6ff', label: 'Mild Fussiness' },
-    moderate: { color: '#f59e0b', bg: '#fffbeb', label: 'Moderate Distress' },
-    severe: { color: '#ef4444', bg: '#fef2f2', label: 'Severe Distress' }
-  };
-  const config = distressConfig[face?.distressLevel] || distressConfig.none;
-  return (
-    <div style={{ backgroundColor: '#fafafa', borderRadius: '10px', padding: '24px', border: '2px solid #e2e8f0', borderLeftWidth: '5px', borderLeftColor: config.color }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '24px' }}>👁️</span>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Face & Distress</h3>
-        </div>
-        <div style={{ backgroundColor: config.bg, padding: '6px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, color: config.color }}>
-          {config.label}
-        </div>
-      </div>
-      <div style={{ marginBottom: '16px' }}>
-        <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px' }}>Emotional State</p>
-        <p style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a', margin: 0, textTransform: 'capitalize' }}>{face?.emotionalState || 'calm'}</p>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
-        <div style={{ backgroundColor: '#ffffff', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-          <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>Face</p>
-          <p style={{ fontSize: '16px', fontWeight: 700, color: face?.faceDetected ? '#10b981' : '#ef4444', margin: 0 }}>{face?.faceDetected ? '✓' : '✗'}</p>
-        </div>
-        <div style={{ backgroundColor: '#ffffff', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-          <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>Eyes</p>
-          <p style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0 }}>{face?.eyesOpen ? 'Open' : 'Closed'}</p>
-        </div>
-        <div style={{ backgroundColor: '#ffffff', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-          <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>Mouth</p>
-          <p style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0 }}>{face?.mouthOpen ? 'Open' : 'Closed'}</p>
-        </div>
-      </div>
-      <div style={{ backgroundColor: '#ffffff', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-        <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
-          <strong style={{ color: '#0f172a' }}>Movement:</strong> {face?.facialMovement || 'minimal'}
-        </p>
-        <p style={{ fontSize: '12px', color: '#10b981', margin: 0, marginTop: '4px' }}>
-          ✓ {face?.confidence || 88}% Confidence
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Camera Monitor with PC2 Remote Vision Stream & 3-PC Integration Telemetry
-function CameraMonitor({ motionData }: { motionData: any }) {
-  const [isLocalWebcamActive, setIsLocalWebcamActive] = useState<boolean>(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480 }
-      });
-      setMediaStream(stream);
-      setIsLocalWebcamActive(true);
-    } catch (err: any) {
-      console.warn("Local webcam not available, using PC2 vision telemetry stream");
-    }
-  };
-
-  const stopCamera = () => {
-    mediaStream?.getTracks().forEach(t => t.stop());
-    setMediaStream(null);
-    setIsLocalWebcamActive(false);
-  };
-
-  useEffect(() => {
-    if (videoRef.current && mediaStream) {
-      videoRef.current.srcObject = mediaStream;
-    }
-  }, [mediaStream]);
-
-  useEffect(() => {
-    let interval: any;
-    if (mediaStream && isLocalWebcamActive) {
-      interval = setInterval(() => {
-        if (videoRef.current && canvasRef.current) {
-          const video = videoRef.current;
-          const canvas = canvasRef.current;
-          if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              try {
-                ctx.drawImage(video, 0, 0, 640, 480);
-                canvas.toBlob((blob) => {
-                  if (blob) {
-                    const formData = new FormData();
-                    formData.append('file', blob, 'frame.jpg');
-                    fetch(`${API_BASE_URL}/api/process_frame`, {
-                      method: 'POST',
-                      body: formData
-                    }).catch(() => {});
-                  }
-                }, 'image/jpeg', 0.5);
-              } catch (err) {}
-            }
-          }
-        }
-      }, 500);
-    }
-    return () => clearInterval(interval);
-  }, [mediaStream, isLocalWebcamActive]);
-
-  const isCritical = motionData?.status === 'UNSAFE';
-  const isWarning = motionData?.status === 'MONITOR' || motionData?.status === 'WARNING';
-
-  return (
-    <div style={{
-      width: '100%',
-      height: '480px',
-      backgroundColor: '#0F172A',
-      borderRadius: '12px',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-      border: isCritical ? '4px solid #ef4444' : (isWarning ? '2px solid #f59e0b' : '1px solid #1e293b'),
-      boxShadow: isCritical ? '0 0 25px rgba(239,68,68,0.5)' : '0 4px 20px rgba(0,0,0,0.15)',
-      transition: 'all 0.3s ease'
-    }}>
-      {/* If local webcam is enabled */}
-      {isLocalWebcamActive ? (
-        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            muted 
-            playsInline 
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-          />
-          <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
-          <button 
-            onClick={stopCamera}
-            style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 20, padding: '6px 12px', background: 'rgba(0,0,0,0.7)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: 700 }}
-          >
-            Switch to PC2 Feed
-          </button>
-        </div>
-      ) : (
-        /* PC2 Remote Vision Telemetry Stream HUD */
-        <div style={{
-          position: 'relative',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          background: 'radial-gradient(circle at center, #1E293B 0%, #0F172A 100%)',
-          color: 'white',
-          padding: '24px'
+        {/* Login Box */}
+        <div style={{ 
+          position: 'relative', 
+          width: '100%', 
+          maxWidth: '440px', 
+          background: 'rgba(255, 255, 255, 0.96)', 
+          backdropFilter: 'blur(20px)', 
+          borderRadius: '28px', 
+          padding: '44px 36px', 
+          boxShadow: '0 25px 60px rgba(0,0,0,0.3)', 
+          border: '1px solid rgba(255,255,255,0.4)',
+          zIndex: 10
         }}>
-          {/* Subtle Grid Lines Overlay */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-            backgroundSize: '32px 32px',
-            pointerEvents: 'none'
-          }} />
+          
+          <button 
+            onClick={() => setActiveView('landing')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', marginBottom: '20px' }}
+          >
+            <ArrowLeft size={16} /> Back to Overview
+          </button>
 
-          {/* Incubator Outline Simulation Graphic */}
-          <div style={{
-            position: 'relative',
-            width: '260px',
-            height: '180px',
-            borderRadius: '24px',
-            border: isCritical ? '2px dashed #ef4444' : '2px dashed rgba(59,130,246,0.5)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(15, 23, 42, 0.6)',
-            boxShadow: isCritical ? '0 0 30px rgba(239,68,68,0.3)' : '0 0 20px rgba(59,130,246,0.15)',
-            marginBottom: '20px'
-          }}>
-            <div style={{ fontSize: '42px', marginBottom: '8px', filter: isCritical ? 'grayscale(0.5)' : 'none' }}>
-              👶
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <div style={{ width: '56px', height: '56px', background: 'linear-gradient(135deg, var(--primary), #0369A1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', margin: '0 auto 16px', boxShadow: '0 8px 20px var(--glow)' }}>
+              <Baby size={32} />
             </div>
-            <div style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '1px', color: isCritical ? '#ef4444' : '#60a5fa' }}>
-              INCUBATOR VISION NODE
-            </div>
-            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px', fontWeight: 600 }}>
-              PC2 OpenCV Motion Stream
-            </div>
-
-            {/* Target Crosshairs */}
-            <div style={{ position: 'absolute', top: '10px', left: '10px', width: '12px', height: '12px', borderTop: '2px solid #60a5fa', borderLeft: '2px solid #60a5fa' }} />
-            <div style={{ position: 'absolute', top: '10px', right: '10px', width: '12px', height: '12px', borderTop: '2px solid #60a5fa', borderRight: '2px solid #60a5fa' }} />
-            <div style={{ position: 'absolute', bottom: '10px', left: '10px', width: '12px', height: '12px', borderBottom: '2px solid #60a5fa', borderLeft: '2px solid #60a5fa' }} />
-            <div style={{ position: 'absolute', bottom: '10px', right: '10px', width: '12px', height: '12px', borderBottom: '2px solid #60a5fa', borderRight: '2px solid #60a5fa' }} />
-          </div>
-
-          <div style={{ textAlign: 'center', zIndex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
-              <div style={{ width: '8px', height: '8px', background: isCritical ? '#ef4444' : '#10b981', borderRadius: '50%', boxShadow: `0 0 8px ${isCritical ? '#ef4444' : '#10b981'}` }} />
-              <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.5px', color: isCritical ? '#ef4444' : '#10b981' }}>
-                PC2 VISION STREAM CONNECTED
-              </span>
-            </div>
-            <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>
-              3-PC Integration: PC1 (Dashboard) ↔ PC2 (Camera AI) ↔ PC3 (Audio AI)
+            <h2 style={{ fontSize: '26px', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.5px', marginBottom: '4px' }}>
+              Welcome to NAVAAYU
+            </h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>
+              Neonatal Monitoring Dashboard
             </p>
           </div>
 
-          <button 
-            onClick={startCamera}
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              padding: '6px 12px',
-              backgroundColor: 'rgba(255,255,255,0.08)',
-              color: '#94a3b8',
-              border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: '6px',
-              fontSize: '11px',
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            📷 Test Local Webcam
-          </button>
-        </div>
-      )}
-
-      {/* Top Left Live Banner */}
-      <div style={{
-        position: 'absolute',
-        top: '16px',
-        left: '16px',
-        backgroundColor: isCritical ? 'rgba(239, 68, 68, 0.9)' : 'rgba(16, 185, 129, 0.9)',
-        color: 'white',
-        padding: '4px 12px',
-        borderRadius: '6px',
-        fontSize: '11px',
-        fontWeight: 800,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        zIndex: 10,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-      }}>
-        <div style={{ width: '6px', height: '6px', backgroundColor: 'white', borderRadius: '50%' }} />
-        {isLocalWebcamActive ? "LOCAL WEBCAM FEED" : "PC2 VISION NODE"}
-      </div>
-
-      {/* Critical Overlay */}
-      {isCritical && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: 'rgba(239, 68, 68, 0.35)',
-          backdropFilter: 'blur(2px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 15
-        }}>
-          <div style={{
-            backgroundColor: '#ef4444',
-            color: 'white',
-            padding: '20px 40px',
-            borderRadius: '12px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '12px',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
-          }}>
-            <AlertCircle size={44} />
-            <span style={{ fontSize: '22px', fontWeight: 900 }}>CRITICAL APNEA ALERT</span>
-            <span style={{ fontSize: '14px', fontWeight: 600 }}>Stillness exceeded on PC2 Vision Node!</span>
-          </div>
-        </div>
-      )}
-
-      {/* Bottom Telemetry HUD */}
-      {motionData && (
-        <div style={{
-          position: 'absolute',
-          bottom: '16px',
-          left: '16px',
-          right: '16px',
-          display: 'flex',
-          gap: '12px',
-          justifyContent: 'center',
-          zIndex: 10
-        }}>
-          <div style={{
-            backgroundColor: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(6px)',
-            padding: '8px 18px',
-            borderRadius: '8px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            border: isCritical ? '2px solid #ef4444' : '1px solid rgba(255,255,255,0.15)'
-          }}>
-            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 700 }}>STATUS</span>
-            <span style={{
-              color: motionData.status === 'SAFE' ? '#4ade80' : isCritical ? '#ef4444' : '#fbbf24',
-              fontWeight: 800,
-              fontSize: '13px'
-            }}>
-              {motionData.status}
-            </span>
-          </div>
-
-          <div style={{
-            backgroundColor: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(6px)',
-            padding: '8px 18px',
-            borderRadius: '8px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            border: '1px solid rgba(255,255,255,0.15)'
-          }}>
-            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 700 }}>PC2 MOTION</span>
-            <span style={{ color: 'white', fontWeight: 800, fontSize: '13px' }}>
-              {typeof motionData.motion === 'number' ? motionData.motion.toFixed(2) : motionData.motion}
-            </span>
-          </div>
-
-          <div style={{
-            backgroundColor: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(6px)',
-            padding: '8px 18px',
-            borderRadius: '8px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            border: '1px solid rgba(255,255,255,0.15)'
-          }}>
-            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 700 }}>STILL TIME</span>
-            <span style={{ color: isCritical ? '#ef4444' : 'white', fontWeight: 800, fontSize: '13px' }}>
-              {motionData.stillTime}s
-            </span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Real-Time Motion Monitoring Card
-function MotionMonitoringCard({ motion }: { motion: any }) {
-  const statusConfig: Record<string, { color: string; bg: string; label: string; message: string }> = {
-    SAFE: { color: '#10b981', bg: '#f0fdf4', label: '✓ SAFE', message: 'Baby is moving normally' },
-    MONITOR: { color: '#f59e0b', bg: '#fffbeb', label: '⚠ MONITOR', message: 'Reduced movement detected' },
-    ALERT: { color: '#ef4444', bg: '#fef2f2', label: '🚨 ALERT', message: 'Baby has been still too long!' },
-    UNSAFE: { color: '#ef4444', bg: '#fef2f2', label: '🚨 CRITICAL', message: 'No movement detected for extended period!' }
-  };
-  const config = statusConfig[motion?.status] || statusConfig.SAFE;
-
-  return (
-    <div style={{
-      backgroundColor: '#ffffff',
-      borderRadius: '16px',
-      padding: '32px',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-      borderLeft: `6px solid ${config.color}`
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#0f172a', margin: 0 }}>
-          Motion Detection System
-        </h2>
-        <div style={{
-          backgroundColor: config.bg,
-          padding: '12px 24px',
-          borderRadius: '24px',
-          border: `3px solid ${config.color}`,
-          fontSize: '16px',
-          fontWeight: 700,
-          color: config.color
-        }}>
-          {config.label}
-        </div>
-      </div>
-
-      <div style={{
-        backgroundColor: config.bg,
-        padding: '16px',
-        borderRadius: '12px',
-        marginBottom: '24px',
-        borderLeft: `4px solid ${config.color}`
-      }}>
-        <p style={{ fontSize: '15px', color: '#0f172a', fontWeight: 500, margin: 0 }}>
-          {config.message}
-        </p>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
-        <MetricBox label="Still Time" value={`${motion?.stillTime || 0}`} unit="sec" color={motion?.status === 'ALERT' || motion?.status === 'UNSAFE' ? '#ef4444' : '#64748b'} />
-        <MetricBox label="Motion Level" value={typeof motion?.motion === 'number' ? motion.motion.toFixed(2) : `${motion?.motion || 0}`} unit="" color="#3b82f6" />
-        <MetricBox label="Confidence" value={`${motion?.confidence || 98}`} unit="%" color="#10b981" />
-        <MetricBox label="Alert Status" value={motion?.alertActive || motion?.status === 'UNSAFE' ? "ON" : "OFF"} unit="" color={motion?.alertActive || motion?.status === 'UNSAFE' ? '#ef4444' : '#10b981'} />
-      </div>
-
-      {(motion?.alertActive || motion?.status === 'UNSAFE') && (
-        <div style={{
-          marginTop: '20px',
-          padding: '16px',
-          backgroundColor: '#fef2f2',
-          borderRadius: '8px',
-          border: '2px solid #ef4444',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <p style={{ fontSize: '14px', fontWeight: 600, color: '#ef4444', margin: 0 }}>
-            🚨 IMMEDIATE ATTENTION REQUIRED
-          </p>
-          <button style={{
-            padding: '8px 16px',
-            backgroundColor: '#ef4444',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '6px',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}>
-            Acknowledge Alert
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Metric Stat Box
-function MetricBox({ label, value, unit, color }: { label: string; value: string; unit: string; color: string }) {
-  return (
-    <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
-      <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px', margin: 0 }}>{label}</p>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: '4px', marginTop: '6px' }}>
-        <p style={{ fontSize: '28px', fontWeight: 700, color, margin: 0 }}>{value}</p>
-        {unit && <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>{unit}</p>}
-      </div>
-    </div>
-  );
-}
-
-// Patient Information Panel
-function PatientInfoPanel({ patient }: { patient: any }) {
-  return (
-    <div style={{
-      backgroundColor: '#ffffff',
-      borderRadius: '12px',
-      padding: '28px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-      border: '1px solid #e2e8f0',
-      borderLeft: '6px solid #3b82f6'
-    }}>
-      <h2 style={{ fontSize: '18px', marginBottom: '20px', color: '#0f172a', fontWeight: 600, margin: '0 0 20px 0' }}>
-        Patient Information
-      </h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
-        <InfoItem label="Infant ID" value={patient?.id || "NB-2026-001"} />
-        <InfoItem label="Age" value={patient?.age || "3 days old"} />
-        <InfoItem label="Weight" value={patient?.weight || "3.2 kg"} />
-        <InfoItem label="Gestational Age" value={patient?.gestationalAge || "38 weeks"} />
-        <InfoItem label="Admission Date" value={patient?.admissionDate || "Jan 21, 2026"} />
-        <InfoItem label="Current Status" value={patient?.status || "Stable"} valueColor="#10b981" />
-      </div>
-    </div>
-  );
-}
-
-function InfoItem({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
-  return (
-    <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-      <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, margin: '0 0 6px 0' }}>
-        {label}
-      </p>
-      <p style={{ fontSize: '17px', fontWeight: 600, color: valueColor || '#0f172a', margin: 0 }}>
-        {value}
-      </p>
-    </div>
-  );
-}
-
-// AI Health Status Card
-function StatusCard({ title, value, confidence, note, status }: any) {
-  const icons: Record<string, React.ReactNode> = {
-    'Cry Pattern': <Activity size={24} color="#06b6d4" />,
-    'Sleep Position': <Brain size={24} color="#8b5cf6" />,
-    'Body Temperature': <Thermometer size={24} color="#ec4899" />
-  };
-  const borderColors: Record<string, string> = { normal: '#10b981', warning: '#f59e0b', alert: '#ef4444' };
-
-  return (
-    <div style={{
-      backgroundColor: '#fafafa',
-      borderRadius: '10px',
-      padding: '24px',
-      border: '2px solid #e2e8f0',
-      borderLeftWidth: '5px',
-      borderLeftColor: borderColors[status] || '#10b981',
-      transition: 'all 0.2s'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {icons[title] || <Activity size={24} />}
-          <p style={{ fontSize: '14px', color: '#64748b', fontWeight: 600, margin: 0 }}>{title}</p>
-        </div>
-        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: borderColors[status] || '#10b981' }} />
-      </div>
-      <p style={{ fontSize: '32px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0' }}>{value}</p>
-      <div style={{ backgroundColor: '#ffffff', padding: '6px 12px', borderRadius: '6px', marginTop: '12px', marginBottom: '8px', display: 'inline-block' }}>
-        <p style={{ fontSize: '12px', color: '#10b981', fontWeight: 600, margin: 0 }}>✓ {confidence}% Confidence</p>
-      </div>
-      <p style={{ fontSize: '12px', color: '#64748b', margin: '8px 0 0 0' }}>{note}</p>
-    </div>
-  );
-}
-
-// Vital Sign Card
-function VitalSignCard({ title, value, unit, normalRange, status }: any) {
-  const borderColors: Record<string, string> = { normal: '#10b981', warning: '#f59e0b', alert: '#ef4444' };
-  const bgColors: Record<string, string> = { normal: '#f0fdf4', warning: '#fffbeb', alert: '#fef2f2' };
-
-  return (
-    <div style={{
-      backgroundColor: '#fafafa',
-      borderRadius: '10px',
-      padding: '24px',
-      border: '2px solid #e2e8f0',
-      borderLeftWidth: '5px',
-      borderLeftColor: borderColors[status] || '#10b981',
-      transition: 'all 0.2s'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Activity size={24} color={borderColors[status] || '#10b981'} />
-          <p style={{ fontSize: '14px', color: '#64748b', fontWeight: 600, margin: 0 }}>{title}</p>
-        </div>
-        <div style={{
-          backgroundColor: bgColors[status] || '#f0fdf4',
-          padding: '4px 10px',
-          borderRadius: '12px',
-          fontSize: '11px',
-          fontWeight: 700,
-          color: borderColors[status] || '#10b981',
-          textTransform: 'uppercase'
-        }}>
-          {status}
-        </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '12px' }}>
-        <p style={{ fontSize: '40px', fontWeight: 700, color: '#0f172a', margin: 0, lineHeight: 1 }}>{value}</p>
-        <p style={{ fontSize: '18px', color: '#94a3b8', fontWeight: 500, margin: 0 }}>{unit}</p>
-      </div>
-      <div style={{ backgroundColor: '#ffffff', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-        <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
-          <strong style={{ color: '#0f172a' }}>Normal Range:</strong> {normalRange} {unit}
-        </p>
-      </div>
-      <p style={{ fontSize: '11px', color: '#94a3b8', margin: '12px 0 0 0' }}>📍 Last updated: 1 min ago</p>
-    </div>
-  );
-}
-
-// Event Timeline
-function EventTimeline({ events }: { events: any[] }) {
-  const eventIcons: Record<string, string> = { measurement: '📊', alert: '⚠️', activity: '🔄', care: '🍼' };
-  const eventColors: Record<string, string> = { measurement: '#3b82f6', alert: '#ef4444', activity: '#10b981', care: '#8b5cf6' };
-
-  return (
-    <div style={{ maxHeight: '360px', overflowY: 'auto', paddingRight: '8px' }}>
-      {events.map((event, idx) => (
-        <div key={idx} style={{
-          display: 'flex',
-          gap: '14px',
-          paddingBottom: '20px',
-          marginBottom: '20px',
-          borderBottom: idx < events.length - 1 ? '1px solid #f1f5f9' : 'none',
-          position: 'relative'
-        }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            backgroundColor: '#f8fafc',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '18px',
-            border: '2px solid #e2e8f0',
-            flexShrink: 0
-          }}>
-            {eventIcons[event.type] || '📌'}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <p style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a', margin: 0 }}>{event.description}</p>
-              <p style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600, margin: 0 }}>{event.time}</p>
-            </div>
-            <div style={{
-              display: 'inline-block',
-              backgroundColor: '#f8fafc',
-              padding: '3px 10px',
-              borderRadius: '12px',
-              fontSize: '11px',
-              color: eventColors[event.type] || '#3b82f6',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.3px'
-            }}>
-              {event.type}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Training Chart
-function TrainingChart({ data }: { data: any[] }) {
-  return (
-    <div style={{ height: '360px' }}>
-      <div style={{ backgroundColor: '#f8fafc', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
-        <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-          <strong style={{ color: '#0f172a' }}>Model Status:</strong> Training complete • <strong style={{ color: '#10b981', marginLeft: '8px' }}>✓ 88% Accuracy achieved</strong>
-        </p>
-      </div>
-      <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey="epoch" tick={{ fontSize: 12, fill: '#64748b' }} />
-          <YAxis tick={{ fontSize: 12, fill: '#64748b' }} />
-          <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px' }} />
-          <Line type="monotone" dataKey="accuracy" stroke="#10b981" strokeWidth={3} name="Accuracy (%)" dot={{ fill: '#10b981', r: 4 }} />
-          <Line type="monotone" dataKey="loss" stroke="#ef4444" strokeWidth={3} name="Loss" dot={{ fill: '#ef4444', r: 4 }} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-// Alert Notification Box
-function AlertBox({ type, message, timestamp }: any) {
-  const styles: Record<string, { bg: string; border: string; icon: React.ReactNode; label: string }> = {
-    normal: { bg: '#f0fdf4', border: '#10b981', icon: <Activity size={20} color="#10b981" />, label: 'NORMAL' },
-    warning: { bg: '#fffbeb', border: '#f59e0b', icon: <AlertCircle size={20} color="#f59e0b" />, label: 'WARNING' },
-    alert: { bg: '#fef2f2', border: '#ef4444', icon: <AlertCircle size={20} color="#ef4444" />, label: 'ALERT' },
-    critical: { bg: '#fef2f2', border: '#ef4444', icon: <AlertCircle size={20} color="#ef4444" />, label: 'CRITICAL' },
-    info: { bg: '#eff6ff', border: '#3b82f6', icon: <Activity size={20} color="#3b82f6" />, label: 'INFO' }
-  };
-  const style = styles[type] || styles.info;
-
-  return (
-    <div style={{
-      backgroundColor: style.bg,
-      borderLeft: `5px solid ${style.border}`,
-      padding: '16px 20px',
-      borderRadius: '8px',
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: '12px'
-    }}>
-      {style.icon}
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <span style={{ fontSize: '11px', fontWeight: 600, color: style.border }}>{style.label}</span>
-          <span style={{ fontSize: '11px', color: '#64748b' }}>{timestamp}</span>
-        </div>
-        <span style={{ fontSize: '14px', color: '#0f172a' }}>{message}</span>
-      </div>
-    </div>
-  );
-}
-
-// Risk Level Panel
-function RiskLevelPanel({ risk }: { risk: any }) {
-  const riskColors: Record<string, { bg: string; border: string; text: string; label: string }> = {
-    low: { bg: '#f0fdf4', border: '#10b981', text: '#10b981', label: 'LOW RISK' },
-    medium: { bg: '#fffbeb', border: '#f59e0b', text: '#f59e0b', label: 'MEDIUM RISK' },
-    high: { bg: '#fef2f2', border: '#ef4444', text: '#ef4444', label: 'HIGH RISK' }
-  };
-  const riskStyle = riskColors[risk?.overall] || riskColors.low;
-
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '16px', color: '#0f172a', fontWeight: 600, margin: 0 }}>Overall Risk Level</h3>
-        <div style={{
-          backgroundColor: riskStyle.bg,
-          padding: '8px 16px',
-          borderRadius: '20px',
-          border: `2px solid ${riskStyle.border}`
-        }}>
-          <p style={{ fontSize: '14px', fontWeight: 600, color: riskStyle.text, margin: 0 }}>
-            ● {riskStyle.label}
-          </p>
-        </div>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-        {(risk?.categories || []).map((cat: any, idx: number) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: cat.color }} />
+          <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
             <div>
-              <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>{cat.name}</p>
-              <p style={{ fontSize: '14px', fontWeight: 600, color: cat.color, margin: 0 }}>{cat.level}</p>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                Username / User ID
+              </label>
+              <div style={{ position: 'relative' }}>
+                <User size={18} color="var(--text-light)" style={{ position: 'absolute', left: '16px', top: '16px' }} />
+                <input 
+                  type="text"
+                  required
+                  placeholder="Doctor / Nurse ID"
+                  value={loginUser}
+                  onChange={(e) => setLoginUser(e.target.value)}
+                  className="medical-input"
+                  style={{ paddingLeft: '44px' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} color="var(--text-light)" style={{ position: 'absolute', left: '16px', top: '16px' }} />
+                <input 
+                  type="password"
+                  required
+                  placeholder="Enter Password"
+                  value={loginPass}
+                  onChange={(e) => setLoginPass(e.target.value)}
+                  className="medical-input"
+                  style={{ paddingLeft: '44px' }}
+                />
+              </div>
+            </div>
+
+            {loginError && (
+              <div style={{ padding: '10px 14px', background: 'var(--secondary-light)', color: 'var(--secondary)', borderRadius: '10px', fontSize: '12px', fontWeight: 700 }}>
+                {loginError}
+              </div>
+            )}
+
+            <button 
+              type="submit"
+              className="btn-primary"
+              style={{ width: '100%', padding: '15px', justifyContent: 'center', fontSize: '16px', marginTop: '6px' }}
+            >
+              Login to NAVAAYU <ArrowRight size={18} />
+            </button>
+
+          </form>
+
+          {/* Demo Password Indicator */}
+          <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--surface-border)', textAlign: 'center' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', background: '#F1F5F9', borderRadius: '8px', fontSize: '12px', fontWeight: 800, color: 'var(--text-main)' }}>
+              🔑 Demo Password: <span style={{ color: 'var(--primary)', fontWeight: 900 }}>1234</span>
             </div>
           </div>
-        ))}
+
+        </div>
+
       </div>
-      <div style={{ marginTop: '20px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-        <p style={{ fontSize: '13px', color: '#475569', margin: 0 }}>
-          <strong>AI Confidence:</strong> {risk?.confidence || 94}% • Based on continuous monitoring of vital signs and behavioral patterns
-        </p>
-      </div>
+    );
+  }
+
+  // =========================================================================
+  // VIEW 3: CLINICAL DASHBOARD (WITH SAME-PAGE EXPANSION & ML PREDICTIONS)
+  // =========================================================================
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--background)', display: 'flex', flexDirection: 'column' }}>
+      
+      {/* Top Clinical Header */}
+      <header style={{ 
+        background: 'white', 
+        borderBottom: '1px solid var(--surface-border)', 
+        padding: '16px 36px', 
+        boxShadow: 'var(--shadow-sm)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50
+      }}>
+        <div style={{ maxWidth: '1600px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          
+          {/* Logo & Clinical Info */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, var(--primary), #0369A1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+              <Baby size={26} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h1 style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>NAVAAYU</h1>
+                <span style={{ fontSize: '11px', padding: '3px 8px', background: 'var(--mint-light)', color: '#047857', borderRadius: '6px', fontWeight: 800 }}>
+                  NICU STATION ACTIVE
+                </span>
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, fontWeight: 600 }}>
+                Intelligent Neonatal Monitoring & Risk Prediction Hub
+              </p>
+            </div>
+          </div>
+
+          {/* 3-PC Architecture Status Badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#F8FAFC', border: '1px solid var(--surface-border)', borderRadius: '12px', fontSize: '12px', fontWeight: 700 }}>
+              <Server size={14} color="var(--primary)" />
+              <span>PC1 Data</span>
+              <span style={{ color: 'var(--text-light)' }}>➔</span>
+              <Cpu size={14} color="var(--lavender)" />
+              <span>PC2 ML Model</span>
+              <span style={{ color: 'var(--text-light)' }}>➔</span>
+              <Monitor size={14} color="var(--mint)" />
+              <span style={{ color: 'var(--mint)', fontWeight: 800 }}>PC3 Live</span>
+            </div>
+
+            {/* Alarm Mute Button */}
+            <button 
+              onClick={() => setIsMasterMuted(!isMasterMuted)}
+              style={{
+                padding: '8px 16px',
+                background: 'white',
+                border: '1px solid var(--surface-border)',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: isMasterMuted ? 'var(--secondary)' : 'var(--mint)'
+              }}
+            >
+              {isMasterMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              {isMasterMuted ? "Alarms Muted" : "Audio Alarms: On"}
+            </button>
+
+            {/* Landing Page Link */}
+            <button 
+              onClick={() => setActiveView('landing')}
+              className="btn-secondary"
+              style={{ padding: '8px 16px', fontSize: '12px' }}
+            >
+              Overview
+            </button>
+
+            {/* Logout */}
+            <button 
+              onClick={() => { setIsAuthenticated(false); setActiveView('landing'); }}
+              style={{ padding: '8px 16px', background: '#F1F5F9', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', cursor: 'pointer' }}
+            >
+              Logout
+            </button>
+
+          </div>
+
+        </div>
+      </header>
+
+      {/* Main Dashboard Body */}
+      <main style={{ maxWidth: '1600px', width: '100%', margin: '0 auto', padding: '32px 36px', flex: 1, display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        
+        {/* Ward Emergency Banner if any baby is in UNSAFE state */}
+        {anyCritical && (
+          <div style={{ padding: '16px 24px', background: 'var(--secondary-light)', border: '2px solid var(--secondary)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', animation: 'pulse-soft 1.5s infinite' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <AlertCircle size={24} color="var(--secondary)" />
+              <div>
+                <span style={{ fontWeight: 900, color: '#991B1B', fontSize: '14px' }}>WARD ATTENTION REQUIRED:</span>
+                <span style={{ fontSize: '13px', color: '#B91C1C', marginLeft: '8px', fontWeight: 600 }}>
+                  Incubator #03 (Aditya Rao) is currently flagging critical apnea stillness.
+                </span>
+              </div>
+            </div>
+            <button 
+              onClick={() => setSelectedBabyId("NB-2026-003")}
+              style={{ padding: '8px 18px', background: 'var(--secondary)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 800, fontSize: '12px', cursor: 'pointer' }}
+            >
+              Inspect Telemetry
+            </button>
+          </div>
+        )}
+
+        {/* SECTION 1: WARD INCUBATORS OVERVIEW (BABY CARDS) */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+            <div>
+              <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                NICU Ward Patient Monitors
+              </h2>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                Select any patient card to expand full telemetry, ML risk predictions, and history below on this page.
+              </p>
+            </div>
+            <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--primary)', background: 'var(--primary-light)', padding: '4px 12px', borderRadius: '8px' }}>
+              {babies.filter(b => b.status !== 'OFFLINE').length} Active Incubators
+            </span>
+          </div>
+
+          {/* Baby Card Grid */}
+          <div className="baby-card-grid">
+            {babies.map((baby) => {
+              const isSelected = baby.id === selectedBabyId;
+              const isCritical = baby.status === 'UNSAFE';
+              const isWarning = baby.status === 'WARNING';
+              const isOffline = baby.status === 'OFFLINE';
+
+              return (
+                <div 
+                  key={baby.id}
+                  onClick={() => setSelectedBabyId(baby.id)}
+                  className={`baby-summary-card ${
+                    isCritical ? 'status-unsafe' : 
+                    isWarning ? 'status-warning' : 
+                    isOffline ? 'status-offline' : 'status-safe'
+                  } ${isSelected ? 'active-selected' : ''}`}
+                >
+                  {/* Card Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 900, color: 'var(--text-main)' }}>
+                          {baby.name}
+                        </span>
+                        {baby.isLiveSource && (
+                          <span style={{ padding: '2px 6px', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>
+                            LIVE
+                          </span>
+                        )}
+                      </div>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        {baby.id} • {baby.incubator}
+                      </span>
+                    </div>
+
+                    {/* Status Badge */}
+                    <span style={{
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      background: isCritical ? 'var(--secondary-light)' : (isWarning ? 'var(--accent-light)' : (isOffline ? '#F1F5F9' : 'var(--mint-light)')),
+                      color: isCritical ? 'var(--secondary)' : (isWarning ? '#B45309' : (isOffline ? '#64748B' : '#047857'))
+                    }}>
+                      {baby.status === 'UNSAFE' ? 'CRITICAL APNEA' : baby.status}
+                    </span>
+                  </div>
+
+                  {/* Vitals Summary Strip (with Trend Arrows) */}
+                  {!isOffline ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', background: '#F8FAFC', padding: '10px 12px', borderRadius: '12px', border: '1px solid var(--surface-border)', marginBottom: '14px' }}>
+                      
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>HR</span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: baby.vitals.heartRate < 100 ? 'var(--secondary)' : 'var(--text-main)' }}>
+                          {baby.vitals.heartRate}
+                        </span>
+                        <span className={`trend-arrow ${baby.trends.heartRate.direction}`} style={{ marginTop: '2px' }}>
+                          {baby.trends.heartRate.symbol}
+                        </span>
+                      </div>
+
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>SpO₂</span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: baby.vitals.spo2 < 93 ? 'var(--secondary)' : 'var(--text-main)' }}>
+                          {baby.vitals.spo2}%
+                        </span>
+                        <span className={`trend-arrow ${baby.trends.spo2.direction}`} style={{ marginTop: '2px' }}>
+                          {baby.trends.spo2.symbol}
+                        </span>
+                      </div>
+
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>RESP</span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: baby.vitals.respRate < 30 ? 'var(--accent)' : 'var(--text-main)' }}>
+                          {baby.vitals.respRate}
+                        </span>
+                        <span className={`trend-arrow ${baby.trends.respRate.direction}`} style={{ marginTop: '2px' }}>
+                          {baby.trends.respRate.symbol}
+                        </span>
+                      </div>
+
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>TEMP</span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-main)' }}>
+                          {baby.vitals.temp}°C
+                        </span>
+                        <span className={`trend-arrow ${baby.trends.temp.direction}`} style={{ marginTop: '2px' }}>
+                          {baby.trends.temp.symbol}
+                        </span>
+                      </div>
+
+                    </div>
+                  ) : (
+                    <div style={{ padding: '16px', background: '#F8FAFC', borderRadius: '12px', textAlign: 'center', fontSize: '12px', color: '#64748B', fontWeight: 600, marginBottom: '14px' }}>
+                      Incubator currently vacant / Discharged
+                    </div>
+                  )}
+
+                  {/* Card Bottom Strip: Risk Level & Expand Action */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Brain size={13} color="var(--lavender)" />
+                      <span style={{ fontWeight: 800, color: isCritical ? 'var(--secondary)' : (isWarning ? '#B45309' : 'var(--primary)') }}>
+                        ML Risk: {baby.riskLevel}
+                      </span>
+                    </div>
+
+                    <span style={{ fontWeight: 700, color: isSelected ? 'var(--primary)' : 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {isSelected ? "Expanded Active" : "Click to View Details"}
+                      {isSelected ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </span>
+                  </div>
+
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* SECTION 2: SAME-PAGE EXPANDED TELEMETRY & PREDICTION VIEW */}
+        <div className="expanded-patient-panel" style={{ padding: '32px' }}>
+          
+          {/* Header of Expanded Section */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--surface-border)', paddingBottom: '20px', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 900 }}>
+                  {activeBaby.name.split(' ').map((n: string) => n[0]).join('')}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h2 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
+                      {activeBaby.name}
+                    </h2>
+                    <span style={{ padding: '3px 10px', background: '#F1F5F9', borderRadius: '6px', fontSize: '12px', fontWeight: 800, color: 'var(--text-muted)' }}>
+                      {activeBaby.id}
+                    </span>
+                    <span style={{
+                      padding: '3px 10px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      background: activeBaby.status === 'UNSAFE' ? 'var(--secondary-light)' : (activeBaby.status === 'WARNING' ? 'var(--accent-light)' : 'var(--mint-light)'),
+                      color: activeBaby.status === 'UNSAFE' ? 'var(--secondary)' : (activeBaby.status === 'WARNING' ? '#B45309' : '#047857')
+                    }}>
+                      Status: {activeBaby.status}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    {activeBaby.incubator} • {activeBaby.age} • Gestation: {activeBaby.gestationalAge} • Current Weight: {activeBaby.weight}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Switcher dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-muted)' }}>FOCUSED PATIENT:</span>
+              <select 
+                value={selectedBabyId}
+                onChange={(e) => setSelectedBabyId(e.target.value)}
+                style={{ padding: '8px 16px', borderRadius: '10px', border: '1.5px solid var(--surface-border)', background: '#F8FAFC', fontWeight: 800, fontSize: '13px', color: 'var(--text-main)', cursor: 'pointer' }}
+              >
+                {babies.map(b => (
+                  <option key={b.id} value={b.id}>{b.name} ({b.id})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Grid Layout: Left Column (Vitals & ML Prediction) | Right Column (Waveforms & History) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '32px' }}>
+            
+            {/* Left Column: Vitals, ML Prediction & Contributing Reasons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
+              {/* 1. Vital Parameters & Directional Trend Detection */}
+              <div>
+                <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Activity size={18} color="var(--primary)" /> Vital Parameters & Real-Time Trend Detection
+                </h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  
+                  {/* Heart Rate Card */}
+                  <div style={{ padding: '16px', background: '#F8FAFC', borderRadius: '14px', border: '1px solid var(--surface-border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)' }}>HEART RATE</span>
+                      <span className={`trend-arrow ${activeBaby.trends.heartRate.direction}`}>
+                        {activeBaby.trends.heartRate.symbol}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, color: activeBaby.vitals.heartRate < 100 ? 'var(--secondary)' : 'var(--text-main)' }}>
+                      {activeBaby.vitals.heartRate} <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)' }}>BPM</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 600 }}>
+                      Trend: {activeBaby.trends.heartRate.label}
+                    </div>
+                  </div>
+
+                  {/* SpO2 Card */}
+                  <div style={{ padding: '16px', background: '#F8FAFC', borderRadius: '14px', border: '1px solid var(--surface-border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)' }}>OXYGEN (SpO₂)</span>
+                      <span className={`trend-arrow ${activeBaby.trends.spo2.direction}`}>
+                        {activeBaby.trends.spo2.symbol}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, color: activeBaby.vitals.spo2 < 93 ? 'var(--secondary)' : 'var(--text-main)' }}>
+                      {activeBaby.vitals.spo2} <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)' }}>%</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 600 }}>
+                      Trend: {activeBaby.trends.spo2.label}
+                    </div>
+                  </div>
+
+                  {/* Respiratory Rate Card */}
+                  <div style={{ padding: '16px', background: '#F8FAFC', borderRadius: '14px', border: '1px solid var(--surface-border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)' }}>RESPIRATORY RATE</span>
+                      <span className={`trend-arrow ${activeBaby.trends.respRate.direction}`}>
+                        {activeBaby.trends.respRate.symbol}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, color: activeBaby.vitals.respRate < 30 ? 'var(--accent)' : 'var(--text-main)' }}>
+                      {activeBaby.vitals.respRate} <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)' }}>BPM</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 600 }}>
+                      Trend: {activeBaby.trends.respRate.label}
+                    </div>
+                  </div>
+
+                  {/* Temperature Card */}
+                  <div style={{ padding: '16px', background: '#F8FAFC', borderRadius: '14px', border: '1px solid var(--surface-border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)' }}>TEMPERATURE</span>
+                      <span className={`trend-arrow ${activeBaby.trends.temp.direction}`}>
+                        {activeBaby.trends.temp.symbol}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, color: 'var(--text-main)' }}>
+                      {activeBaby.vitals.temp} <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)' }}>°C</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 600 }}>
+                      Trend: {activeBaby.trends.temp.label}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* 2. Random Forest ML Risk Prediction & Contributing Reasons */}
+              <div style={{ 
+                padding: '24px', 
+                background: activeBaby.status === 'UNSAFE' ? 'var(--secondary-light)' : (activeBaby.status === 'WARNING' ? 'var(--accent-light)' : 'var(--lavender-light)'), 
+                borderRadius: '16px', 
+                border: `1.5px solid ${activeBaby.status === 'UNSAFE' ? 'var(--secondary)' : (activeBaby.status === 'WARNING' ? 'var(--accent)' : 'var(--lavender)')}` 
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Brain size={22} color={activeBaby.status === 'UNSAFE' ? 'var(--secondary)' : 'var(--lavender)'} />
+                    <h3 style={{ fontSize: '16px', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
+                      Random Forest Risk Prediction
+                    </h3>
+                  </div>
+                  <span style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: 900,
+                    background: activeBaby.status === 'UNSAFE' ? 'var(--secondary)' : (activeBaby.status === 'WARNING' ? 'var(--accent)' : 'var(--lavender)'),
+                    color: 'white'
+                  }}>
+                    RISK LEVEL: {activeBaby.riskLevel}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '8px' }}>
+                  Contributing Physiological Factors Identified:
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {activeBaby.predictionReasons.map((reason: string, idx: number) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px', color: '#1E293B', fontWeight: 600 }}>
+                      <span style={{ color: activeBaby.status === 'UNSAFE' ? 'var(--secondary)' : 'var(--primary)', fontWeight: 900 }}>•</span>
+                      <span>{reason}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                  <span>Model Architecture: Random Forest Classifier (PC2 Node)</span>
+                  <span>Confidence: {activeBaby.riskLevel === 'HIGH' ? '96%' : '94%'}</span>
+                </div>
+              </div>
+
+              {/* 3. Patient Information & Basic History Details */}
+              <div style={{ padding: '24px', background: '#F8FAFC', borderRadius: '16px', border: '1px solid var(--surface-border)' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FileText size={18} color="var(--primary)" /> Patient History & Maternal Record
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '12px' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Mother's Name:</span>
+                    <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.motherName}</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Delivery Type:</span>
+                    <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.deliveryType}</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Birth Weight:</span>
+                    <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.birthWeight} (Gain: +50g)</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Blood Group:</span>
+                    <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.bloodGroup}</span>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 700, display: 'block' }}>Feeding Schedule:</span>
+                    <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{activeBaby.feedingSchedule}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right Column: Waveform Trends, PC2 Vision Telemetry, & Shift History Timeline */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
+              {/* Real-time Trend Chart: Respiratory Activity & Chest Displacement */}
+              <div style={{ padding: '20px', background: '#F8FAFC', borderRadius: '16px', border: '1px solid var(--surface-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-main)' }}>
+                    Continuous Trend: Respiratory Rate & Motion Signal
+                  </span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>
+                    30-sec sliding telemetry
+                  </span>
+                </div>
+                
+                <div style={{ height: '140px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={waveformData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <XAxis dataKey="time" hide />
+                      <YAxis hide domain={['auto', 'auto']} />
+                      <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '11px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                      <Area type="monotone" dataKey="breathing" stroke="var(--primary)" fill="rgba(2,132,199,0.15)" strokeWidth={2.5} isAnimationActive={false} />
+                      <Area type="monotone" dataKey="motion" stroke="var(--lavender)" fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" isAnimationActive={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Real-time Trend Chart: Heart Rate & SpO2 */}
+              <div style={{ padding: '20px', background: '#F8FAFC', borderRadius: '16px', border: '1px solid var(--surface-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-main)' }}>
+                    Bedside Trend: Heart Rate (BPM) & Oxygen (SpO₂ %)
+                  </span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>
+                    Continuous vitals sync
+                  </span>
+                </div>
+                
+                <div style={{ height: '140px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={waveformData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <XAxis dataKey="time" hide />
+                      <YAxis hide domain={['auto', 'auto']} />
+                      <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '11px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                      <Area type="monotone" dataKey="heartRate" stroke="var(--secondary)" fill="rgba(239,68,68,0.15)" strokeWidth={2.5} isAnimationActive={false} />
+                      <Area type="monotone" dataKey="spo2" stroke="var(--mint)" fill="transparent" strokeWidth={2} isAnimationActive={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* PC2 & PC3 Vision & Audio Telemetry Telemetry Node */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                
+                {/* PC2 Vision Node Card */}
+                <div style={{ padding: '16px', background: '#0F172A', color: 'white', borderRadius: '14px', border: '1px solid #1E293B' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#94A3B8' }}>PC2 VISION NODE</span>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeBaby.status === 'UNSAFE' ? 'var(--secondary)' : 'var(--mint)' }} />
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 800 }}>
+                    Stillness: {activeBaby.stillTime}s
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px' }}>
+                    Motion: {activeBaby.status === 'UNSAFE' ? '0.00 px (Apnea)' : '1.24 px (Active)'}
+                  </div>
+                </div>
+
+                {/* PC3 Audio Cry Node Card */}
+                <div style={{ padding: '16px', background: '#0F172A', color: 'white', borderRadius: '14px', border: '1px solid #1E293B' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#94A3B8' }}>PC3 BIO-ACOUSTIC NODE</span>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeBaby.cryStatus === 'distress' ? 'var(--accent)' : 'var(--mint)' }} />
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 800 }}>
+                    {activeBaby.cryStatus === 'distress' ? 'Distress Cry Detected' : 'Calm / Silent'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px' }}>
+                    Acoustic Classifier Link: Active
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Shift Events & Clinical Audit History Timeline */}
+              <div style={{ padding: '20px', background: '#F8FAFC', borderRadius: '16px', border: '1px solid var(--surface-border)' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Clock size={16} color="var(--primary)" /> Recent Clinical Events & History Log
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {activeBaby.historyEvents.map((evt: any, i: number) => {
+                    const isAlert = evt.type === 'alert';
+                    return (
+                      <div 
+                        key={i} 
+                        style={{ 
+                          padding: '10px 14px', 
+                          background: isAlert ? 'var(--secondary-light)' : 'white', 
+                          borderRadius: '10px', 
+                          border: `1px solid ${isAlert ? '#FECACA' : '#E2E8F0'}`,
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          fontSize: '12px'
+                        }}
+                      >
+                        <span style={{ fontWeight: 700, color: isAlert ? '#991B1B' : 'var(--text-main)' }}>
+                          {evt.desc}
+                        </span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          {evt.time}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+
+      {/* Clean Bottom Bar */}
+      <footer style={{ padding: '20px 36px', background: 'white', borderTop: '1px solid var(--surface-border)', textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
+        NAVAAYU Clinical Telemetry • Connected to 3-PC Architecture (PC1 Sensor ➔ PC2 Random Forest ML ➔ PC3 Clinical Display)
+      </footer>
+
     </div>
   );
 }
