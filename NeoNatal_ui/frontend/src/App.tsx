@@ -363,8 +363,8 @@ const generateInitialWaveforms = () => Array.from({ length: 30 }, (_, i) => ({
 }));
 
 function App() {
-  const [activeView, setActiveView] = useState<'landing' | 'login' | 'dashboard'>('landing');
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [activeView, setActiveView] = useState<'landing' | 'login' | 'dashboard'>('dashboard');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [babies, setBabies] = useState<any[]>(INITIAL_BABIES);
   const [selectedBabyId, setSelectedBabyId] = useState<string>("NB-2026-001");
   const [waveformData, setWaveformData] = useState<any[]>(generateInitialWaveforms());
